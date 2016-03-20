@@ -1,0 +1,28 @@
+syntax: glob
+# do not keep build directory created by foray under version control
+doc/build/**
+doc/source/_reference/**
+.cache/**
+dist/**
+build/**
+.tox/**
+.eggs/**
+*.x
+*.a
+*.so
+*.pyc
+# ingnore vim .swp files
+.*.swp
+# ignore the .mod files
+*.mod
+# ignore the latex byproduct files
+*.aux
+*.log
+*.bbl
+*.blg
+*.fls
+*.idx
+*.ilg
+*.ind
+*.out
+*.fdb_latexmk
