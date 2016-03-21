@@ -2,9 +2,9 @@
 
 class AnharmonicThermo(object):
 
-    def __init__(self):
+    def __init__(self, vibenergies, potentialenergy):
 
-        pass
+        
 
     def get_entropy(self):
 
