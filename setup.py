@@ -20,12 +20,12 @@ setup(
     ],
     entry_points = {
         'console_scripts' : [
-            'thermopy = thermo.themo:main',
+            'thermopy = thermo.thermo:main',
         ]
     },
     license = open('LICENSE.rst').read(),
     long_description = readme(),
-    name = 'chemtools',
+    name = 'thermopy',
     packages = ['thermo'],
     url = 'https://bitbucket.org/lukaszmentel/thermopy/',
     version = '0.1.0',
