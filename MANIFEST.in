@@ -1,5 +1,5 @@
-include doc/*.rst
-include doc/Makefile
-include doc/conf.py
+include docs/source/*.rst
+include docs/Makefile
+include docs/source/conf.py
 include README.md
 include LICENSE.rst
