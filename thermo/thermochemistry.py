@@ -36,7 +36,7 @@ def qtranslational(atoms, T, p):
 
     return vol*np.power(2.0*pi*totmass*Boltzmann*T/Planck**2, 1.5)/Avogadro
 
-def qrotational(atoms, T, point_group, sigma):
+def qrotational(atoms, system, T):
     '''
     Calculate the rotational partition function for a rigid rotor
 
@@ -55,16 +55,18 @@ def qrotational(atoms, T, point_group, sigma):
     atmass = value('atomic mass unit-kilogram relationship')
     I = atoms.get_moments_of_inertia(vectors=False)*atmass*np.power(10.0, -20)
 
-    if point_group in ['Coov', 'Dooh']:
+    sigma = system['symmetrynumber']
+    if system['pointgroup'] in ['Coov', 'Dooh']:
         return np.sqrt(pi*I[0]*I[1]*np.power(2.0*Boltzmann*T/hbar**2, 2))/sigma
     else:
         return np.sqrt(pi*np.product(I)*np.power(2.0*Boltzmann*T/hbar**2, 3))/sigma
 
 class Thermochemistry(object):
 
-	def __init__(self, vibenergies):
+	def __init__(self, vibenergies, potentialenergy):
 
 		self.vibenergies = vibenergies
+		self.potentialenergy = potentialenergy
 
 		# check if the energies are real/positive
 

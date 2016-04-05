@@ -72,7 +72,19 @@ def project_massweighted(args, atoms, ndof, hessian, verbose=False):
     #print('Final Dmat: \n', Dmat)
     #proj_hessian = np.dot(Dmat.T, np.dot(mwhessian, Dmat))
 
-def project(args, atoms, ndof, hessian, verbose=False):
+def project(job, atoms, ndof, hessian, verbose=False):
+    '''
+    Calculate the hessian with translational and rotational degrees of freedom
+    projected out.
+
+    Args:
+        job : dict
+        atoms : ase.Atoms
+        ndof : int
+            Number of degrees of freedom
+        hessian : numpy.array
+            Hessian/force constant matrix
+    '''
 
     if verbose:
         print('INFO: CARTESIAN coordinates')
@@ -96,7 +108,7 @@ def project(args, atoms, ndof, hessian, verbose=False):
     umasses = np.ones(ndof, dtype=float)
     Dmat[np.arange(ndof), np.tile(np.arange(3), ndof//3)] = np.sqrt(umasses)
 
-    if args.proj_translations:
+    if job['proj_translations']:
 
         Dmat[np.arange(ndof), np.tile(np.arange(3), ndof//3)] = np.sqrt(umasses)
     
@@ -105,7 +117,7 @@ def project(args, atoms, ndof, hessian, verbose=False):
             for row in Dmat:
                 print("".join(['{0:15.8f}'.format(x) for x in row]))
 
-    if args.proj_rotations:
+    if job['proj_rotations']:
 
         Dmat[ ::3, 3] = 0.0
         Dmat[1::3, 3] = -xyzcom[:, 2]
@@ -138,19 +150,19 @@ def project(args, atoms, ndof, hessian, verbose=False):
     # project the force constant matrix (1 - P)*H*(1 - P)
     return np.dot(I - qqp, np.dot(hessian, I - qqp))
 
-def get_harmonic_vibrations(args, atoms, hessian):
+def get_harmonic_vibrations(job, atoms, hessian):
     '''
     Given a force constant matrix (hessian) decide whether or not to project the translational and
     rotational degrees of freedom based on ``proj_translations`` and ``proj_rotations`` argsuments
-    in ``args`` respectively.
+    in ``job`` respectively.
 
     Args:
         atoms : Atoms
             ASE atoms object
         hessian : np.array
             Force constant (Hessian) matrix, should be square
-        args : Namespace
-            Namespace with the arguments parsed from the input/config
+        job : dict
+            Dictionary with the arguments parsed from the input/config
     '''
 
     # threshold for keeping the small eigenvalues of the hamiltonian
@@ -162,9 +174,9 @@ def get_harmonic_vibrations(args, atoms, hessian):
     # symmetrize the hessian
     hessian = (hessian + hessian.T)*0.5e0 
 
-    if args.proj_translations | args.proj_rotations:
+    if job['proj_translations'] | job['proj_rotations']:
 
-        hessian = project(args, atoms, ndof, hessian, verbose=False)
+        hessian = project(job, atoms, ndof, hessian, verbose=False)
 
     # create the mass vector, with the masses for each atom repeated 3 times
     masses = np.repeat(atoms.get_masses(), 3)

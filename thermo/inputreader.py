@@ -25,8 +25,8 @@ def parse_arguments():
         raise ValueError('Specified file <{}> does not exist'.format(args.config))
 
     defaults = {
-        'Tinitial'     : '298.15',
-        'Tfinal'       : '298.15',
+        'Tinitial'     : '303.15',
+        'Tfinal'       : '303.15',
         'Tstep'        : '0.0',
         'pressure'     : '1.0',
         'translations' : 'true',
@@ -39,39 +39,60 @@ def parse_arguments():
     config = cp.ConfigParser(defaults=defaults, allow_no_value=True)
     config.read(args.config)
 
-    symmetrynumbers = {
-        'C1'   : 1,
-        'Cs'   : 1,
-        'C2'   : 2,
-        'C2v'  : 2,
-        'C3v'  : 3,
-        'C2h'  : 2,
-        'Coov' : 1,
-        'D2h'  : 4,
-        'D3h'  : 6,
-        'D5h'  : 10,
-        'Dooh' : 2,
-        'D3d'  : 6,
-        'Td'   : 12,
-        'Oh'   : 24,
-        }
+    conditions = {}
+    conditions['Tinitial'] = config.getfloat('conditions', 'Tinitial')
+    conditions['Tfinal'] = config.getfloat('conditions', 'Tfinal')
+    conditions['Tstep'] = config.getfloat('conditions', 'Tstep')
+    conditions['pressure'] = config.getfloat('conditions', 'pressure')
+    
+    job = {}
+    job['proj_translations'] = config.getboolean('job', 'translations')
+    job['proj_rotations'] = config.getboolean('job', 'rotations')
+    job['code'] = config.get('job', 'code')
+    
+    system = {}
+    system['phase'] = config.get('system', 'phase')
+    system['pointgroup'] = config.get('system', 'pointgroup')
+    system['symmetrynumber'] = get_symmetry_number(system['pointgroup'])
+    
+    return conditions, job, system
 
-    args.Tinitial = config.getfloat('thermo', 'Tinitial')
-    args.Tfinal = config.getfloat('thermo', 'Tfinal')
-    args.step = config.getfloat('thermo', 'Tstep')
-    args.pressure = config.getfloat('thermo', 'pressure')
-    args.proj_translations = config.getboolean('thermo', 'translations')
-    args.proj_rotations = config.getboolean('thermo', 'rotations')
-    args.code = config.get('thermo', 'code')
-    args.phase = config.get('thermo', 'phase')
-    args.pointgroup = config.get('thermo', 'pointgroup')
-    if args.pointgroup in symmetrynumbers.keys():
-        args.symmetrynumber = symmetrynumbers[args.pointgroup]
+def get_symmetry_number(pointgroup):
+    '''
+    Return the symmetry number for a given point group
+
+    .. see::
+       C. J. Cramer, `Essentials of Computational Chemistry, Theories and Models`, 
+       second edition, p. 363 
+
+    Args:
+        pointgroup : str
+            Symbol of the point group
+    '''
+
+    symmetrynumbers = {'Ci' :  1, 'Cs' :  1, 'Coov' :  1, 'Dooh' : 2,
+                       'T'  : 12, 'Td' : 12, 'Oh'   : 24, 'Ih'   : 60}
+
+    cpatt = re.compile(r'C(\d+)[vh]?')    
+    dpatt = re.compile(r'D(\d+)[dh]?')
+    spatt = re.compile(r'S(\d+)')
+
+    if pointgroup in symmetrynumbers.keys():
+        return symmetrynumbers[pointgroup]
     else:
-        raise ValueError('Point group label <{}> unknown, cannot assign a rotational symmetry '
-                         'number'.format(args.pointgroup))
+        mc = cpatt.match(pointgroup)
+        md = dpatt.match(pointgroup)
+        ms = spatt.match(pointgroup)
 
-    return args
+        if mc:
+            return int(mc.group(1))
+        elif md:
+            return 2*int(md.group(1))
+        elif ms:
+            return int(ms.group(1))//2
+        else:
+            raise ValueError('Point group label "{}" unknown, cannot assign a rotational symmetry '
+                             'number'.format(pointgroup))
 
 def read_vasp_hessian(outcar='OUTCAR'):
     '''
