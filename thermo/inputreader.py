@@ -100,3 +100,16 @@ def read_vasp_hessian(outcar='OUTCAR'):
     else:
         raise ValueError('No hessian found in file: {}'.format(outcar))
 
+def read_em_freq(fname):
+    '''
+    Read the file ``fname`` with the frequencies, reduced masses and fitted
+    fitted coefficients for the potential  into a pandas DataFrame.
+    
+    Args:
+        fname : str
+            Name of the file
+    '''
+
+    cols = ['type', 'freq', 'mass', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']
+    data = pd.read_csv(fname, sep='\s+', engine='python', names=cols)
+    return data
