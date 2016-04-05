@@ -16,7 +16,10 @@ setup(
     description = "Functions for calculating thermochemistry with anharmonic corrections",
     include_package_data = True,
     install_requires = [
+        'ase',
         'numpy >= 1.7',
+        'pandas',
+        'scipy',
     ],
     entry_points = {
         'console_scripts' : [
@@ -32,7 +35,10 @@ setup(
     classifiers = [
         'Environment :: Console',
         'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
         'Topic :: Scientific/Engineering :: Chemistry',
         'Topic :: Scientific/Engineering :: Physics',
     ],

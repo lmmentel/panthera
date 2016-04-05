@@ -4,8 +4,6 @@ from __future__ import print_function, division
 from scipy.constants import hbar, angstrom, value, elementary_charge, value, pi, speed_of_light
 import numpy as np
 
-# conversion fator from eV/A^2 to cm^-1
-vasp2invcm = 1.0e8*np.sqrt(elementary_charge)/(np.sqrt(value('atomic mass constant'))*2.0*pi*speed_of_light)
 
 def get_levicivita():
     'Get the Levi_civita symemtric tensor'
@@ -79,7 +77,9 @@ def project(job, atoms, ndof, hessian, verbose=False):
 
     Args:
         job : dict
+            Dictionary with job parameters
         atoms : ase.Atoms
+            Atoms object
         ndof : int
             Number of degrees of freedom
         hessian : numpy.array
@@ -168,6 +168,10 @@ def get_harmonic_vibrations(job, atoms, hessian):
     # threshold for keeping the small eigenvalues of the hamiltonian
     # THRESH = np.finfo(np.float32).eps
     THRESH = 1.0e-10
+    # conversion fator from eV/A^2 to cm^-1
+    vasp2invcm = 1.0e8*np.sqrt(elementary_charge)/(np.sqrt(value('atomic mass constant'))*2.0*pi*speed_of_light)
+
+
 
     ndof = hessian.shape[0]
 

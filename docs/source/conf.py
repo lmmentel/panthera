@@ -25,8 +25,8 @@ import sphinx_rtd_theme
 import inspect
 from sphinx import apidoc
 
-MOCK_MODULES = ['argparse', 'numpy', 'scipy', 'scipy.optimize', 'scipy.linalg', 'pandas',
-                'mendeleev']
+MOCK_MODULES = ['argparse', 'ase', 'ase.io.', 'ase.io.vasp', 'numpy', 'numpy.linalg',
+                'scipy', 'scipy.constants', 'scipy.optimize', 'scipy.linalg', 'pandas']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
@@ -34,9 +34,6 @@ for mod_name in MOCK_MODULES:
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 if on_rtd:
     html_theme = 'default'
-#else:
-#    pass
-#    sys.path.append('/home/lmentel/Devel/thermopy')
 
 __location__ = os.path.join(os.getcwd(), os.path.dirname(
     inspect.getfile(inspect.currentframe())))
@@ -48,11 +45,12 @@ cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
 apidoc.main(cmd_line.split(" "))
 
 
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
+
+sys.path.insert(0, os.path.abspath(os.path.basename(module_dir)))
 
 # -- General configuration ------------------------------------------------
 

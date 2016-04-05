@@ -1,4 +1,8 @@
 
+'''
+Module providing functions for reading the input and other related files
+'''
+
 import re
 import argparse
 import os
@@ -10,6 +14,7 @@ else:
     import ConfigParser as cp
 
 import numpy as np
+import pandas as pd
 
 def parse_arguments():
     '''
@@ -44,24 +49,24 @@ def parse_arguments():
     conditions['Tfinal'] = config.getfloat('conditions', 'Tfinal')
     conditions['Tstep'] = config.getfloat('conditions', 'Tstep')
     conditions['pressure'] = config.getfloat('conditions', 'pressure')
-    
+
     job = {}
     job['proj_translations'] = config.getboolean('job', 'translations')
     job['proj_rotations'] = config.getboolean('job', 'rotations')
     job['code'] = config.get('job', 'code')
-    
+
     system = {}
     system['phase'] = config.get('system', 'phase')
     system['pointgroup'] = config.get('system', 'pointgroup')
     system['symmetrynumber'] = get_symmetry_number(system['pointgroup'])
-    
+
     return conditions, job, system
 
 def get_symmetry_number(pointgroup):
     '''
     Return the symmetry number for a given point group
 
-    .. see::
+    .. seealso::
        C. J. Cramer, `Essentials of Computational Chemistry, Theories and Models`, 
        second edition, p. 363 
 

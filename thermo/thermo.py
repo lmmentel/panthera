@@ -10,10 +10,10 @@ import numpy as np
 from ase.io.vasp import read_vasp_out
 #from ase.thermochemistry import HarmonicThermo
 
-from inputreader import parse_arguments, read_vasp_hessian
-from vibrations import get_harmonic_vibrations
-from anharmonic_hamiltonian import anharmonic_frequencies
-from thermochemistry import qtranslational, qrotational, Thermochemistry
+from .inputreader import parse_arguments, read_vasp_hessian
+from .vibrations import get_harmonic_vibrations
+from .anharmonic_hamiltonian import anharmonic_frequencies
+from .thermochemistry import qtranslational, qrotational, Thermochemistry
 
 def main():
     '''The main Thermo program'''
@@ -41,7 +41,6 @@ def main():
             if np.abs(conditions['Tstep']) > epsilon:
                 num = int((conditions['Tfinal'] - conditions['Tinitial'])/conditions['Tstep']) + 1
                 temps = np.linspace(conditions['Tinitial'], conditions['Tfinal'], num)
-                #temps = np.arange(conditions['Tinitial'], conditions['Tfinal'], conditions['Tstep'])
             else:
                 temps = [conditions['Tinitial'], conditions['Tfinal']] 
         else:
@@ -54,9 +53,9 @@ def main():
                 qrot = qrotational(atoms, system, T)
             else:
                 qtrans = qrot = 0.0
-        
+
             print('THERMOCHEMISTRY'.center(80, '='))
-            print('\n\t @ T = {0:6.2f} K\t p = {1:6.2f}\n'.format(T, conditions['pressure']))    
+            print('\n\t @ T = {0:6.2f} K\t p = {1:6.2f}\n'.format(T, conditions['pressure']))
             print('ln qtranslational: ', np.log(qtrans))
             print('ln qrotational   : ', np.log(qrot))
             print('ln qvibrational  : ', thermo.get_qvibrational(T, uselog=True))
