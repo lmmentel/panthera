@@ -1,4 +1,6 @@
 
+'Main package file for the themopy package'
+
 from __future__ import print_function, division
 
 from pprint import pprint
@@ -13,7 +15,33 @@ from ase.io.vasp import read_vasp_out
 from .inputreader import parse_arguments, read_vasp_hessian
 from .vibrations import get_harmonic_vibrations
 from .anharmonic_hamiltonian import anharmonic_frequencies
-from .thermochemistry import qtranslational, qrotational, Thermochemistry
+from .thermochemistry import Thermochemistry
+
+def temperature_range(conditions):
+    '''
+    Calculate the temperature grid from the input values and return them as numpy array
+
+    Args:
+        conditions : dict
+            Variable for conditions read from the input/config
+
+    Returns:
+        temps : numpy.array
+            Array with the temperature grid
+    '''
+
+    epsilon = np.finfo(np.float).eps
+    if np.abs(conditions['Tinitial'] - conditions['Tfinal']) > epsilon:
+        if np.abs(conditions['Tstep']) > epsilon:
+            num = int((conditions['Tfinal'] - conditions['Tinitial'])/conditions['Tstep']) + 1
+            temps = np.linspace(conditions['Tinitial'], conditions['Tfinal'], num)
+        else:
+            temps = np.array([conditions['Tinitial'], conditions['Tfinal']])
+    else:
+        temps = np.array([conditions['Tinitial']])
+
+    return temps
+
 
 def main():
     '''The main Thermo program'''
@@ -34,33 +62,12 @@ def main():
         vibenergies = Planck * freqs * 100.0*value('inverse meter-hertz relationship')
         vibenergies = vibenergies[vibenergies > 0.0]
 
-        thermo = Thermochemistry(vibenergies, atoms.get_potential_energy())
+        thermo = Thermochemistry(atoms, vibenergies, conditions, system)
 
-        epsilon = np.finfo(np.float).eps
-        if np.abs(conditions['Tinitial'] - conditions['Tfinal']) > epsilon:
-            if np.abs(conditions['Tstep']) > epsilon:
-                num = int((conditions['Tfinal'] - conditions['Tinitial'])/conditions['Tstep']) + 1
-                temps = np.linspace(conditions['Tinitial'], conditions['Tfinal'], num)
-            else:
-                temps = [conditions['Tinitial'], conditions['Tfinal']] 
-        else:
-            temps = [conditions['Tinitial']]
+        for temp in temperature_range(conditions):
 
-        for T in temps:
+            thermo.summary(temp)
 
-            if system['phase'] == 'gas':
-                qtrans = qtranslational(atoms, T, conditions['pressure'])
-                qrot = qrotational(atoms, system, T)
-            else:
-                qtrans = qrot = 0.0
-
-            print('THERMOCHEMISTRY'.center(80, '='))
-            print('\n\t @ T = {0:6.2f} K\t p = {1:6.2f}\n'.format(T, conditions['pressure']))
-            print('ln qtranslational: ', np.log(qtrans))
-            print('ln qrotational   : ', np.log(qrot))
-            print('ln qvibrational  : ', thermo.get_qvibrational(T, uselog=True))
-
-            print('ZPVE : {0:10.2f} kJ/mol'.format(thermo.get_ZPVE(T)))
 
         #cm1_to_eV = 100.0*value('inverse meter-electron volt relationship')
 
