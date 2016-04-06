@@ -73,6 +73,14 @@ def qrotational(atoms, system, T):
 
 class Thermochemistry(object):
 
+	'''
+	Thermochemistry the results will be in kJ/mol
+
+	Args:
+		vibenergies : numpy.array
+			A vector of `3N-6` vibrational energies in Joules
+	'''
+
 	def __init__(self, vibenergies, potentialenergy):
 
 		self.vibenergies = vibenergies
@@ -85,7 +93,7 @@ class Thermochemistry(object):
 		Calculate the Zero Point Vibrational Energy (ZPVE)
 		'''
 
-		return 0.5*np.sum(self.vibenergies)
+		return 0.5*np.sum(self.vibenergies)*Avogadro*1.0e-3
 
 	def get_qvibrational(self, T, uselog=True):
 		'''

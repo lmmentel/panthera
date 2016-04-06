@@ -60,6 +60,8 @@ def main():
             print('ln qrotational   : ', np.log(qrot))
             print('ln qvibrational  : ', thermo.get_qvibrational(T, uselog=True))
 
+            print('ZPVE : {0:10.2f} kJ/mol'.format(thermo.get_ZPVE(T)))
+
         #cm1_to_eV = 100.0*value('inverse meter-electron volt relationship')
 
         #thermo = HarmonicThermo(freqs.real[:-3]*cm1_to_eV, atoms.get_potential_energy())
@@ -71,8 +73,6 @@ def main():
 
     else:
         raise NotImplementedError('Code {} is not supported yet.'.format(job['code']))
-
-
 
 if __name__ == '__main__':
 
