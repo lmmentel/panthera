@@ -67,8 +67,8 @@ def get_symmetry_number(pointgroup):
     Return the symmetry number for a given point group
 
     .. seealso::
-       C. J. Cramer, `Essentials of Computational Chemistry, Theories and Models`, 
-       second edition, p. 363 
+       C. J. Cramer, `Essentials of Computational Chemistry, Theories and Models`,
+       2nd Edition, p. 363
 
     Args:
         pointgroup : str
@@ -78,7 +78,7 @@ def get_symmetry_number(pointgroup):
     symmetrynumbers = {'Ci' :  1, 'Cs' :  1, 'Coov' :  1, 'Dooh' : 2,
                        'T'  : 12, 'Td' : 12, 'Oh'   : 24, 'Ih'   : 60}
 
-    cpatt = re.compile(r'C(\d+)[vh]?')    
+    cpatt = re.compile(r'C(\d+)[vh]?')
     dpatt = re.compile(r'D(\d+)[dh]?')
     spatt = re.compile(r'S(\d+)')
 
@@ -130,12 +130,12 @@ def read_em_freq(fname):
     '''
     Read the file ``fname`` with the frequencies, reduced masses and fitted
     fitted coefficients for the potential  into a pandas DataFrame.
-    
+
     Args:
         fname : str
             Name of the file
     '''
 
     cols = ['type', 'freq', 'mass', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']
-    data = pd.read_csv(fname, sep='\s+', engine='python', names=cols)
+    data = pd.read_csv(fname, sep=r'\s+', engine='python', names=cols)
     return data

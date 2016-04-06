@@ -15,12 +15,17 @@ def get_total_mass(atoms):
     if len(atoms.constraints) == 0:
         return np.sum(atoms.get_masses()) * atmass
     else:
-        raise NotImplementerError('not yet')
+        raise NotImplementedError('not yet')
 
 def qtranslational(atoms, T, p):
     '''
     Calculate the translational partition function for a mole of ideal gas at temperature ``T`` and
     pressure ``p``.
+
+	.. math::
+
+	   q_{vib}(V, T) = \left( \\frac{ 2\pi M k_{B} T }{h^{2}} \\right)^{3/2} V
+
 
     Args:
         atoms : ase.Atoms
@@ -38,7 +43,12 @@ def qtranslational(atoms, T, p):
 
 def qrotational(atoms, system, T):
     '''
-    Calculate the rotational partition function for a rigid rotor
+    Calculate the rotational partition function in a rigid rotor approximation
+
+	.. math::
+
+	   q_{rot}(T) = \\frac{\sqrt{\pi I_{A}I_{B}I_{C}} }{\sigma} \left( \\frac{ 2 k_{B} T }{\hbar^{2}} \\right)^{3/2}
+
 
     Args:
         atoms : ase.Atoms
