@@ -73,16 +73,16 @@ def main():
 
             for temp in temperature_range(conditions):
 
-                thermo.summary(temp)      
+                thermo.summary(temp)
 
         else:
             raise NotImplementedError('Code {} is not supported yet.'.format(job['code']))
 
     elif args.command == 'anharmonic':
+        atoms = read_vasp_out('OUTCAR', index=-1)
 
-        #anharmonic_frequencies(atoms, args)
-
-        raise NotImplementedError('Anharmonic almost working but not quite...')
+        for temp in temperature_range(conditions):
+            anharmonic_frequencies(atoms, temp, job, system)
 
 if __name__ == '__main__':
 

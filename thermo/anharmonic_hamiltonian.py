@@ -6,29 +6,39 @@ from scipy.constants import value, Boltzmann
 
 def factsqrt(m, n):
     '''
-    Return a constant, factorial like constant
+    Return a factorial like constant
+
+    .. math::
+
+        f(m, n) = \prod^{n - 1}_{i = 0} \sqrt{m - i}
+
+    Args:
+        m : int
+            Argument of the series
+        n : int
+            Length of the series
     '''
 
-    return np.sqrt(np.prod([m - i for i in range(n)] ))
+    return np.sqrt(np.prod([m - i for i in range(n)]))
 
-def get_vibdof(atoms, args):
+def get_vibdof(atoms, job, system):
     'Calculate the number of vibrational degrees of freedom'
 
     # get the total number of degrees of freedom
     ndof = 3*(len(atoms) - len(atoms.constraints))
 
     extradof = 0
-    if args.phase.lower() == 'gas':
-        if args.proj_rotations & args.proj_translations:
+    if system['phase'].lower() == 'gas':
+        if job['proj_rotations'] & job['proj_translations']:
             if ndof > 6:
                 extradof = 6
             elif ndof == 6:
                 extradof = 5
-    elif args.phase.lower() == 'solid':
-        if args.proj_rotations | args.proj_translations:
+    elif system['phase'].lower() == 'solid':
+        if job['proj_rotations'] | job['proj_translations']:
             extradof = 3
     else:
-        raise ValueError('Wrong phase specification: {}, expecting one of: "gas", "solid"'.format(args.phase))
+        raise ValueError('Wrong phase specification: {}, expecting one of: "gas", "solid"'.format(job.phase))
 
     return ndof - extradof
 
@@ -111,8 +121,14 @@ def get_hamiltonian(rank, freq, mass, coeffs):
 
     return Hamil
 
-def anharmonic_frequencies(atoms, args, fname='em_freq'):
-    'Calculate the anharmonic frequencies'
+def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
+    '''
+    Calculate the anharmonic frequencies
+
+    Args:
+        atoms : ase.Atoms
+            Atoms object
+    '''
 
     if not os.path.exists(fname):
         raise OSError('File "{}" does not exist'.format(fname))
@@ -122,9 +138,9 @@ def anharmonic_frequencies(atoms, args, fname='em_freq'):
     FREQ_THRESH = 1.0e-6
 
     cols = ['type', 'freq', 'mass', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']
-    data = pd.read_csv(fname, sep='\s+', engine='python', names=cols)
+    data = pd.read_csv(fname, sep=r'\s+', engine='python', names=cols)
 
-    nvibdof = get_vibdof(atoms, args)
+    nvibdof = get_vibdof(atoms, job, system)
 
     print('Number of vibrational DOF : {0:5d}'.format(nvibdof))
     print('Number of read frequencies: {0:5d}'.format(data.shape[0]))
@@ -137,7 +153,6 @@ def anharmonic_frequencies(atoms, args, fname='em_freq'):
         if row.type.strip() == 'A':
 
             converged = False
-            niters = 0
             rank = 4
             niter = 0
             qvib_last = 1.0
@@ -152,9 +167,9 @@ def anharmonic_frequencies(atoms, args, fname='em_freq'):
                 print('hamiltonian'.center(60, '*'))
                 w, v = np.linalg.eig(hamil)
                 w = np.sort(w)
-                qvib = np.sum(np.exp(-w*au2joule/(Boltzmann*args.Tfinal)))
-                print(args.Tfinal)
-                print('mode: ',i , ' qvib: {0:15.8e}'.format(qvib),  ' w: ', w)
+                qvib = np.sum(np.exp(-w*au2joule/(Boltzmann*temp)))
+                print(temp)
+                print('mode: ', i ,' qvib: {0:15.8e}'.format(qvib), ' w: ', w)
 
                 converged = (np.abs(qvib - qvib_last) < QVIB_THRESH) | (np.abs(w[0] - freq_last) < FREQ_THRESH)
 
