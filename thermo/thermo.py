@@ -14,7 +14,7 @@ from ase.io.vasp import read_vasp_out
 
 from .inputreader import parse_arguments, read_vasp_hessian, write_internal
 from .vibrations import get_harmonic_vibrations
-from .anharmonic_hamiltonian import anharmonic_frequencies
+from .anharmonicity import anharmonic_frequencies
 from .thermochemistry import Thermochemistry
 
 def temperature_range(conditions):
