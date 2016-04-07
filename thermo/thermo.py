@@ -8,6 +8,7 @@ from pprint import pprint
 from scipy.constants import Planck, value
 
 import numpy as np
+import pandas as pd
 
 from ase.io.vasp import read_vasp_out
 #from ase.thermochemistry import HarmonicThermo
@@ -81,11 +82,15 @@ def main():
     elif args.command == 'anharmonic':
         atoms = read_vasp_out('OUTCAR', index=-1)
 
+        pd.set_option("display.width", 120)
+
         for temp in temperature_range(conditions):
             print(' 6th order T = {} '.format(temp).center(80, '='))
-            anharmonic_frequencies(atoms, temp, job, system, fname='em_freq')
+            df6 = anharmonic_frequencies(atoms, temp, job, system, fname='em_freq')
+            print(df6)
             print(' 4th order T = {} '.format(temp).center(80, '='))
-            anharmonic_frequencies(atoms, temp, job, system, fname='em_freq_4th')
+            df4 = anharmonic_frequencies(atoms, temp, job, system, fname='em_freq_4th')
+            print(df4)
 
 if __name__ == '__main__':
 

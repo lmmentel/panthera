@@ -152,7 +152,7 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     invcm2au = 100*value('inverse meter-hartree relationship')
     kT = Boltzmann*temp
 
-    df = pd.DataFrame(columns=['freq', 'qvib', 'U', 'S', 'converged', 'info', 'rank'],
+    df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'converged', 'info', 'rank'],
                       index=pd.Index(np.arange(nvibdof), name='mode'), dtype=float)
 
     for mode, row in data.iterrows():
@@ -176,6 +176,7 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
                     deltaq = 2.0*qvib
 
                 anhfreq = (w[1] - w[0])/invcm2au
+                zpve = w[0]*au2joule
                 U, S = get_anh_state_functions(w*au2joule, temp)
 
                 terminate = (np.abs(qvib - qvib_last) < QVIB_THRESH)\
@@ -183,9 +184,9 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
 
                 if terminate:
                     if anhfreq < row.freq:
-                        row = (anhfreq, qvib, U, S, True, 'OK', rank)
+                        row = (anhfreq, zpve, qvib, U, S, True, 'OK', rank)
                     else:
-                        row = (anhfreq, qvib, U, S, True, 'AGTH', rank)
+                        row = (anhfreq, zpve, qvib, U, S, True, 'AGTH', rank)
                 else:
                     if w[0] > 0.0 and abs(qvib - qvib_last) < 1.5*deltaq:
                         rank += 1
@@ -193,11 +194,11 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
                         qvib_last = qvib
                         freq_last = w[0]
                     else:
-                        row = (anhfreq, qvib, U, S, False, 'CP', rank)
+                        row = (anhfreq, zpve, qvib, U, S, False, 'CP', rank)
                         break
 
                     if niter >= MAXITER:
-                        row = (anhfreq, qvib, U, S, False, 'MAXITER', rank)
+                        row = (anhfreq, zpve, qvib, U, S, False, 'MAXITER', rank)
                         break
 
                 niter += 1
@@ -205,7 +206,6 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
             df.iloc[mode] = row
 
     df['rank'] = df['rank'].astype(int)
-    print(df.info(), df, sep='\n')
     return df
 
 def get_anh_state_functions(eigenvals, T):
