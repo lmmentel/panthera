@@ -12,7 +12,7 @@ import numpy as np
 from ase.io.vasp import read_vasp_out
 #from ase.thermochemistry import HarmonicThermo
 
-from .inputreader import parse_arguments, read_vasp_hessian
+from .inputreader import parse_arguments, read_vasp_hessian, write_internal
 from .vibrations import get_harmonic_vibrations
 from .anharmonic_hamiltonian import anharmonic_frequencies
 from .thermochemistry import Thermochemistry
@@ -42,44 +42,47 @@ def temperature_range(conditions):
 
     return temps
 
-
 def main():
     '''The main Thermo program'''
 
-    conditions, job, system = parse_arguments()
+    args, conditions, job, system = parse_arguments()
 
     pprint(conditions)
     pprint(job)
     pprint(system)
 
-    if job['code'] == 'VASP':
-        atoms = read_vasp_out('OUTCAR', index=0)
+    if args.command == 'writeinp':
+        atoms = read_vasp_out('OUTCAR', index=-1)
         hessian = read_vasp_hessian('OUTCAR')
 
-        freqs = get_harmonic_vibrations(job, atoms, hessian)
+        write_internal(atoms, hessian, filename='default')
 
-        # convert frequencies from [cm^-1] to [Hz]
-        vibenergies = Planck * freqs * 100.0*value('inverse meter-hertz relationship')
-        vibenergies = vibenergies[vibenergies > 0.0]
+    elif args.command == 'harmonic':
 
-        thermo = Thermochemistry(atoms, vibenergies, conditions, system)
+        if job['code'] == 'VASP':
+            atoms = read_vasp_out('OUTCAR', index=0)
+            hessian = read_vasp_hessian('OUTCAR')
 
-        for temp in temperature_range(conditions):
+            freqs = get_harmonic_vibrations(job, atoms, hessian)
 
-            thermo.summary(temp)
+            # convert frequencies from [cm^-1] to [Hz] and get vib. energies in Joules
+            vibenergies = Planck * freqs * 100.0*value('inverse meter-hertz relationship')
+            vibenergies = vibenergies[vibenergies > 0.0]
 
+            thermo = Thermochemistry(atoms, vibenergies, conditions, system)
 
-        #cm1_to_eV = 100.0*value('inverse meter-electron volt relationship')
+            for temp in temperature_range(conditions):
 
-        #thermo = HarmonicThermo(freqs.real[:-3]*cm1_to_eV, atoms.get_potential_energy())
-        #print('Internal : ', thermo.get_internal_energy(303.))
-        #print('Entropy  : ', thermo.get_entropy(303.))
-        #print('Helmholtz: ', thermo.get_gibbs_energy(303.))
+                thermo.summary(temp)      
+
+        else:
+            raise NotImplementedError('Code {} is not supported yet.'.format(job['code']))
+
+    elif args.command == 'anharmonic':
 
         #anharmonic_frequencies(atoms, args)
 
-    else:
-        raise NotImplementedError('Code {} is not supported yet.'.format(job['code']))
+        raise NotImplementedError('Anharmonic almost working but not quite...')
 
 if __name__ == '__main__':
 
