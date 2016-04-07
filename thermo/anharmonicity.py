@@ -152,9 +152,8 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     invcm2au = 100*value('inverse meter-hartree relationship')
     kT = Boltzmann*temp
 
-    # mode is the index
-    df = pd.DataFrame(columns=['freq', 'converged', 'info', 'rank', 'U', 'S'],
-                      index=data.index)
+    df = pd.DataFrame(columns=['freq', 'qvib', 'U', 'S', 'converged', 'info', 'rank'],
+                      index=pd.Index(np.arange(nvibdof), name='mode'), dtype=float)
 
     for mode, row in data.iterrows():
 
@@ -172,18 +171,21 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
                 w, v = np.linalg.eig(hamil)
                 w = np.sort(w)
                 qvib = np.sum(np.exp(-w*au2joule/kT))
+
                 if niter == 0:
                     deltaq = 2.0*qvib
 
-                terminate = (np.abs(qvib - qvib_last) < QVIB_THRESH) & (np.abs(w[0] - freq_last) < FREQ_THRESH)
+                anhfreq = (w[1] - w[0])/invcm2au
+                U, S = get_anh_state_functions(w*au2joule, temp)
+
+                terminate = (np.abs(qvib - qvib_last) < QVIB_THRESH)\
+                            & (np.abs(w[0] - freq_last) < FREQ_THRESH)
 
                 if terminate:
-                    anhfreq = (w[1] - w[0])/invcm2au
-                    U, S = get_anh_state_functions(w*au2joule, temp)
                     if anhfreq < row.freq:
-                        row = (anhfreq, True, 'OK', rank, U, S)
+                        row = (anhfreq, qvib, U, S, True, 'OK', rank)
                     else:
-                        row = (anhfreq, True, 'AGTH', rank, U, S)
+                        row = (anhfreq, qvib, U, S, True, 'AGTH', rank)
                 else:
                     if w[0] > 0.0 and abs(qvib - qvib_last) < 1.5*deltaq:
                         rank += 1
@@ -191,26 +193,20 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
                         qvib_last = qvib
                         freq_last = w[0]
                     else:
-                        terminate = True
-                        anhfreq = (w[1] - w[0])/invcm2au
-                        U, S = get_anh_state_functions(w*au2joule, temp)
-                        row = (anhfreq, False, 'CP', rank, U, S)
+                        row = (anhfreq, qvib, U, S, False, 'CP', rank)
+                        break
 
                     if niter >= MAXITER:
-                        terminate = True
-                        anhfreq = (w[1] - w[0])/invcm2au
-                        U, S = get_anh_state_functions(w*au2joule, temp)
-                        row = (anhfreq, False, 'MAXITER', rank, U, S)
+                        row = (anhfreq, qvib, U, S, False, 'MAXITER', rank)
+                        break
 
                 niter += 1
 
-        #else:
-        #    print(row.type, row.freq)
+            df.iloc[mode] = row
 
-        df.iloc[mode] = row
-
-    print(df)
-    return
+    df['rank'] = df['rank'].astype(int)
+    print(df.info(), df, sep='\n')
+    return df
 
 def get_anh_state_functions(eigenvals, T):
     '''
