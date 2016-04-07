@@ -60,7 +60,7 @@ class Thermochemistry(object):
 
 	    Args:
 	        T : float
-	            Temperature in K
+	            Temperature in `K`
 	    '''
 
 	    # calcualte the moments of ineria and convert them to [kg*m^2]

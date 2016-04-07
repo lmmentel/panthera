@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from scipy.constants import value, Boltzmann
+from scipy.constants import value, Boltzmann, Avogadro
 
 def factsqrt(m, n):
     '''
@@ -64,12 +64,6 @@ def get_hamiltonian(rank, freq, mass, coeffs):
     vk = np.sqrt(1.0/(mass*freq))
     uk = -0.5*freq
 
-    print('mass: ', mass)
-    print('freq: ', freq*value('hartree-inverse meter relationship')/100.0)
-    print('vk: ', vk)
-    print('uk: ', uk)
-    print('coeffs: ', coeffs)
-
     # main diagonal i == j
     idx = np.arange(rank)
     Hamil[idx, idx] = [-0.5*uk*(2*i + 1.0) + coeffs[0] + 0.5*coeffs[2]*vk**2*(2*i + 1.0) \
@@ -128,6 +122,15 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     Args:
         atoms : ase.Atoms
             Atoms object
+        temp : float
+            Temperature in `K`
+        job : dict
+            Dictionary with job specicification
+        system : dict
+            Dicitonary with system specification
+        fname : str
+            Name of the file with frequencies and fitted coefficients, should
+            have 10 columns per mode
     '''
 
     if not os.path.exists(fname):
@@ -147,40 +150,95 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
 
     au2joule = value('hartree-joule relationship')
     invcm2au = 100*value('inverse meter-hartree relationship')
+    kT = Boltzmann*temp
 
-    for i, row in data.iterrows():
+    # mode is the index
+    df = pd.DataFrame(columns=['freq', 'converged', 'info', 'rank', 'U', 'S'],
+                      index=data.index)
+
+    for mode, row in data.iterrows():
 
         if row.type.strip() == 'A':
 
-            converged = False
+            terminate = False
             rank = 4
             niter = 0
-            qvib_last = 1.0
+            qvib_last = 0.0
             freq_last = 0.0
-            print('mode: {0:d}'.format(i).center(80, '='))
-            while not converged:
 
-                print('iteration: {0:d}'.format(niter).center(40, '-'))
+            while not terminate:
+
                 hamil = get_hamiltonian(rank, row.freq*invcm2au, row.mass, row[cols[-7:]].values)
-                print('hamiltonian'.center(60, '*'))
-                print(hamil)
-                print('hamiltonian'.center(60, '*'))
                 w, v = np.linalg.eig(hamil)
                 w = np.sort(w)
-                qvib = np.sum(np.exp(-w*au2joule/(Boltzmann*temp)))
-                print(temp)
-                print('mode: ', i ,' qvib: {0:15.8e}'.format(qvib), ' w: ', w)
+                qvib = np.sum(np.exp(-w*au2joule/kT))
+                if niter == 0:
+                    deltaq = 2.0*qvib
 
-                converged = (np.abs(qvib - qvib_last) < QVIB_THRESH) | (np.abs(w[0] - freq_last) < FREQ_THRESH)
+                terminate = (np.abs(qvib - qvib_last) < QVIB_THRESH) & (np.abs(w[0] - freq_last) < FREQ_THRESH)
 
-                if not converged:
-                    rank += 1
-                    qvib_last = qvib
-                    freq_last = w[0]
+                if terminate:
+                    anhfreq = (w[1] - w[0])/invcm2au
+                    U, S = get_anh_state_functions(w*au2joule, temp)
+                    if anhfreq < row.freq:
+                        row = (anhfreq, True, 'OK', rank, U, S)
+                    else:
+                        row = (anhfreq, True, 'AGTH', rank, U, S)
+                else:
+                    if w[0] > 0.0 and abs(qvib - qvib_last) < 1.5*deltaq:
+                        rank += 1
+                        deltaq = abs(qvib - qvib_last)
+                        qvib_last = qvib
+                        freq_last = w[0]
+                    else:
+                        terminate = True
+                        anhfreq = (w[1] - w[0])/invcm2au
+                        U, S = get_anh_state_functions(w*au2joule, temp)
+                        row = (anhfreq, False, 'CP', rank, U, S)
+
                     if niter >= MAXITER:
-                        converged = True
+                        terminate = True
+                        anhfreq = (w[1] - w[0])/invcm2au
+                        U, S = get_anh_state_functions(w*au2joule, temp)
+                        row = (anhfreq, False, 'MAXITER', rank, U, S)
+
                 niter += 1
 
-        else:
-            print(row.type, row.freq)
+        #else:
+        #    print(row.type, row.freq)
+
+        df.iloc[mode] = row
+
+    print(df)
     return
+
+def get_anh_state_functions(eigenvals, T):
+    '''
+    Calculate the internal energy ``U`` and entropy ``S`` for an anharmonic
+    vibrational mode with eigenvalues ``eigvals`` at temperature ``T`` in kJ/mol
+
+    .. math::
+
+       U = N_{A}\\frac{\sum^{n}_{i=1} \epsilon_{i}\exp(\epsilon_{i}/k_{B}T) }{\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T)}
+
+       S = N_{A}k_{B}\log(\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T)) + \\frac{N_{A}}{T}\\frac{\sum^{n}_{i=1} \epsilon_{i}\exp(\epsilon_{i}/k_{B}T) }{\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T)}
+
+    Args:
+        eigenvals : numpy.array
+            Eigenvalues of the anharmonic 1D Hamiltonian in Joules
+        T : float
+            Temperature in `K`
+
+    Returns:
+        (U, S) : tuple of floats
+            Tuple with the internal energy and entropy
+    '''
+
+    kT = Boltzmann*T
+    sum1 = np.sum(eigenvals * np.exp(-eigenvals/kT))
+    sum2 = np.sum(np.exp(-eigenvals/kT))
+
+    U = Avogadro*sum1/sum2
+    S = Boltzmann*Avogadro*np.log(sum2) + Avogadro*sum1/(sum2*T)
+    # convert J/mol to kJ/mol
+    return (U*1.0e-3, S*1.0e-3)

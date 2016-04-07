@@ -82,7 +82,10 @@ def main():
         atoms = read_vasp_out('OUTCAR', index=-1)
 
         for temp in temperature_range(conditions):
-            anharmonic_frequencies(atoms, temp, job, system)
+            print(' 6th order T = {} '.format(temp).center(80, '='))
+            anharmonic_frequencies(atoms, temp, job, system, fname='em_freq')
+            print(' 4th order T = {} '.format(temp).center(80, '='))
+            anharmonic_frequencies(atoms, temp, job, system, fname='em_freq_4th')
 
 if __name__ == '__main__':
 
