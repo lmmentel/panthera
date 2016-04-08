@@ -1,4 +1,4 @@
-''' Thermopy setup script'''
+''' panther setup script'''
 
 from setuptools.command.test import test as TestCommand
 import sys
@@ -23,14 +23,14 @@ setup(
     ],
     entry_points = {
         'console_scripts' : [
-            'thermopy = thermo.thermo:main',
+            'panther = panther.panther:main',
         ]
     },
     license = open('LICENSE.rst').read(),
     long_description = readme(),
-    name = 'thermopy',
-    packages = ['thermo'],
-    url = 'https://bitbucket.org/lukaszmentel/thermopy/',
+    name = 'panther',
+    packages = ['panther'],
+    url = 'https://bitbucket.org/lukaszmentel/panther/',
     version = '0.1.0',
     classifiers = [
         'Environment :: Console',

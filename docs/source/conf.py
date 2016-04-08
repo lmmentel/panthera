@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# thermopy documentation build configuration file, created by
+# panther documentation build configuration file, created by
 # sphinx-quickstart on Tue Apr  5 18:35:48 2016.
 #
 # This file is execfile()d with the current directory set to its
@@ -39,7 +39,7 @@ __location__ = os.path.join(os.getcwd(), os.path.dirname(
     inspect.getfile(inspect.currentframe())))
 
 output_dir = os.path.join(__location__, "_reference")
-module_dir = os.path.join(__location__, "../../thermo")
+module_dir = os.path.join(__location__, "../../panther")
 cmd_line_template = "sphinx-apidoc -f --separate -o {outputdir} {moduledir}"
 cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
 apidoc.main(cmd_line.split(" "))
@@ -83,7 +83,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'thermopy'
+project = 'panther'
 copyright = '2016, Lukasz Mentel'
 author = 'Lukasz Mentel'
 
@@ -237,7 +237,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'thermopydoc'
+htmlhelp_basename = 'pantherdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -259,7 +259,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'thermopy.tex', 'thermopy Documentation',
+    (master_doc, 'panther.tex', 'panther Documentation',
      'Lukasz Mentel', 'manual'),
 ]
 
@@ -289,7 +289,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'thermopy', 'thermopy Documentation',
+    (master_doc, 'panther', 'panther Documentation',
      [author], 1)
 ]
 
@@ -303,8 +303,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'thermopy', 'thermopy Documentation',
-     author, 'thermopy', 'One line description of project.',
+    (master_doc, 'panther', 'panther Documentation',
+     author, 'panther', 'One line description of project.',
      'Miscellaneous'),
 ]
 

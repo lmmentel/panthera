@@ -1,4 +1,5 @@
 
+'Method for calcualting thermochemistry'
 
 import numpy as np
 from scipy.constants import value, pi, Avogadro, Planck, hbar, Boltzmann, gas_constant
