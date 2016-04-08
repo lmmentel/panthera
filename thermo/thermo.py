@@ -15,8 +15,8 @@ from ase.io.vasp import read_vasp_out
 
 from .inputreader import parse_arguments, read_vasp_hessian, write_internal
 from .vibrations import get_harmonic_vibrations
-from .anharmonicity import anharmonic_frequencies
-from .thermochemistry import Thermochemistry
+from .anharmonicity import anharmonic_frequencies, merge_vibs
+from .thermochemistry import HarmonicThermo, AnharmonicThermo
 
 def temperature_range(conditions):
     '''
@@ -70,7 +70,7 @@ def main():
             vibenergies = Planck * freqs * 100.0*value('inverse meter-hertz relationship')
             vibenergies = vibenergies[vibenergies > 0.0]
 
-            thermo = Thermochemistry(atoms, vibenergies, conditions, system)
+            thermo = HarmonicThermo(vibenergies, atoms, conditions, system)
 
             for temp in temperature_range(conditions):
 
@@ -88,9 +88,16 @@ def main():
             print(' 6th order T = {} '.format(temp).center(80, '='))
             df6 = anharmonic_frequencies(atoms, temp, job, system, fname='em_freq')
             print(df6)
+            df6.to_pickle('anh6.pkl')
             print(' 4th order T = {} '.format(temp).center(80, '='))
             df4 = anharmonic_frequencies(atoms, temp, job, system, fname='em_freq_4th')
             print(df4)
+            df4.to_pickle('anh4.pkl')
+
+            df = merge_vibs(df6, df4)
+
+            thermo = AnharmonicThermo(df, atoms, conditions, system)
+            thermo.summary(temp)
 
 if __name__ == '__main__':
 

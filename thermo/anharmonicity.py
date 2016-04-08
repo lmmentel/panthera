@@ -1,3 +1,6 @@
+
+'Methods for solving the one dimentional vibrational eigenproblem'
+
 import os
 import numpy as np
 import pandas as pd
@@ -125,9 +128,9 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
         temp : float
             Temperature in `K`
         job : dict
-            Dictionary with job specicification
+            Dictionary with the job specicification
         system : dict
-            Dicitonary with system specification
+            Dicitonary with the system specification
         fname : str
             Name of the file with frequencies and fitted coefficients, should
             have 10 columns per mode
@@ -208,6 +211,22 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     df['rank'] = df['rank'].astype(int)
     return df
 
+def merge_vibs(anh6, anh4, harmonic=None):
+
+    anh6['order'] = 6
+    anh4['order'] = 4
+    
+    df = pd.DataFrame(columns=anh6.columns, index=anh6.index)
+
+    df.update(anh4[anh4['converged']])
+    df.update(anh6[anh6['info'] == 'OK'])
+
+    if df.isnull().any(axis=1).any():
+        print(df)
+        raise ValueError('There are missing data after merge')
+
+    return df
+
 def get_anh_state_functions(eigenvals, T):
     '''
     Calculate the internal energy ``U`` and entropy ``S`` for an anharmonic
@@ -227,7 +246,7 @@ def get_anh_state_functions(eigenvals, T):
 
     Returns:
         (U, S) : tuple of floats
-            Tuple with the internal energy and entropy
+            Tuple with the internal energy and entropy in kJ/mol
     '''
 
     kT = Boltzmann*T
