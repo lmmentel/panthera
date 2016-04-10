@@ -91,7 +91,6 @@ def project(job, atoms, ndof, hessian, verbose=False):
         for row in atoms.get_positions():
             print("".join(['{0:15.8f}'.format(x) for x in row]))
 
-
     uatoms = atoms.copy()
     uatoms.set_masses(np.ones(len(atoms), dtype=float))
 
@@ -137,7 +136,15 @@ def project(job, atoms, ndof, hessian, verbose=False):
                 print("".join(['{0:15.8f}'.format(x) for x in row]))
 
     # orthogonalize
-    q, r = np.linalg.qr(Dmat)
+    if job['proj_translations'] and job['proj_rotations']:
+        q, _ = np.linalg.qr(Dmat)
+    elif job['proj_translations'] and not job['proj_rotations']:
+        q, _ = np.linalg.qr(Dmat[:, :3])
+        q = np.hstack((q, Dmat[:, 3:]))
+    elif not job['proj_translations'] and job['proj_rotations']:
+        q, _ = np.linalg.qr(Dmat[:, 3:])
+        q = np.hstack((Dmat[:, :3], q))
+
     if verbose:
         print('INFO: ORTHOGONALIZED Dmat')
         for row in q:
@@ -170,8 +177,6 @@ def get_harmonic_vibrations(job, atoms, hessian):
     THRESH = 1.0e-10
     # conversion fator from eV/A^2 to cm^-1
     vasp2invcm = 1.0e8*np.sqrt(elementary_charge)/(np.sqrt(value('atomic mass constant'))*2.0*pi*speed_of_light)
-
-
 
     ndof = hessian.shape[0]
 
