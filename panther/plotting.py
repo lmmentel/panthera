@@ -77,6 +77,8 @@ def plot_mode(mode, pes, coeff6, coeff4):
              markersize=ms, markerfacecolor='none', markeredgecolor=cp[2], markeredgewidth=mew, label='harmonic')
     
     plt.title('Mode # {}'.format(mode))
+    plt.xlabel('$\Delta x$')
+    plt.ylabel('$\Delta E$')
     plt.legend(loc='best', frameon=False)
     plt.show()
 
@@ -91,9 +93,15 @@ def main():
 
     if os.path.exists(args.sixth):
         coeff6 = read_em_freq(args.sixth)
+    else:
+        raise OSError('File {} does not exist'.format(args.sixth))
     if os.path.exists(args.fourth):
         coeff4 = read_em_freq(args.fourth)
+    else:
+        raise OSError('File {} does not exist'.format(args.fourth))
     if os.path.exists(args.sixth):
         pes = parse_pes(args.pes)
+    else:
+        raise OSError('File {} does not exist'.format(args.pes))
 
     plot_mode(args.mode, pes, coeff6, coeff4)
