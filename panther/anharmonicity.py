@@ -141,7 +141,7 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     if not os.path.exists(fname):
         raise OSError('File "{}" does not exist'.format(fname))
 
-    MAXITER = 50
+    MAXITER = 100
     QVIB_THRESH = 1.0e-8
     FREQ_THRESH = 1.0e-6
 
@@ -209,21 +209,18 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
 
             df.iloc[mode] = anh
 
-    df['rank'] = df['rank'].astype(int)
+    df['rank'] = df['rank'].fillna(0).astype(int)
     return df
 
 def merge_vibs(anh6, anh4, T, verbose=True):
 
     harmonic = harmonic_df('em_freq', T)
 
-    print('\n' + ' Thermochemistry per mode hamonic order T = {} '.format(T).center(80, '='), end='\n\n')
-    print_mode_info(harmonic)
-    
     anh6['order'] = 6
     anh4['order'] = 4
     
     if verbose:
-        print('\n' + ' Thermochemistry per mode hamonic order T = {} '.format(T).center(80, '='), end='\n\n')
+        print('\n' + ' Thermochemistry per mode hamonic T = {} '.format(T).center(80, '='), end='\n\n')
         print_mode_info(harmonic)
         print('\n' + ' Thermochemistry per mode 6th order T = {} '.format(T).center(80, '='), end='\n\n')
         print_mode_info(anh6)

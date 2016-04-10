@@ -39,7 +39,7 @@ class Thermochemistry(object):
         self.system = system
 
     def get_qrotational(self, T):
-	    '''
+        '''
 	    Calculate the rotational partition function in a rigid rotor approximation
 
 		.. math::
@@ -51,20 +51,23 @@ class Thermochemistry(object):
 	    Args:
 	        T : float
 	            Temperature in `K`
-	    '''
+        '''
+        
+        if self.system['phase'] == 'gas':
+            # calculate the moments of ineria and convert them to [kg*m^2]
+            atmass = value('atomic mass unit-kilogram relationship')
+            I = self.atoms.get_moments_of_inertia(vectors=False)*atmass*np.power(10.0, -20)
 
-	    # calcualte the moments of ineria and convert them to [kg*m^2]
-	    atmass = value('atomic mass unit-kilogram relationship')
-	    I = self.atoms.get_moments_of_inertia(vectors=False)*atmass*np.power(10.0, -20)
-
-	    sigma = self.system['symmetrynumber']
-	    if self.system['pointgroup'] in ['Coov', 'Dooh']:
-	        return 2.0*np.max(I)*Boltzmann*T/(sigma*hbar**2)
-	    else:
-	        return np.sqrt(pi*np.product(I)*np.power(2.0*Boltzmann*T/hbar**2, 3))/sigma
+            sigma = self.system['symmetrynumber']
+            if self.system['pointgroup'] in ['Coov', 'Dooh']:
+    	        return 2.0*np.max(I)*Boltzmann*T/(sigma*hbar**2)
+            else:
+    	        return np.sqrt(pi*np.product(I)*np.power(2.0*Boltzmann*T/hbar**2, 3))/sigma
+        else:
+            return 0.0
 
     def get_qtranslational(self, T):
-	    '''
+        '''
 	    Calculate the translational partition function for a mole of ideal gas at temperature ``T``
         and pressure ``p``.
 
@@ -78,12 +81,16 @@ class Thermochemistry(object):
 	            Atoms
 	        T : float
 	            Temperature in K
-	    '''
+        '''
 
-	    vol = gas_constant*T/(self.conditions['pressure']*1.0e6)
-	    totmass = get_total_mass(self.atoms)
+        if self.system['phase'] == 'gas':
 
-	    return vol*np.power(2.0*pi*totmass*Boltzmann*T/Planck**2, 1.5)/Avogadro
+    	    vol = gas_constant*T/(self.conditions['pressure']*1.0e6)
+    	    totmass = get_total_mass(self.atoms)
+
+    	    return vol*np.power(2.0*pi*totmass*Boltzmann*T/Planck**2, 1.5)/Avogadro
+        else:
+            return 0.0
 
     def get_translational_energy(self, T):
         '''

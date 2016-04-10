@@ -10,7 +10,6 @@ from scipy.constants import Planck, value
 import numpy as np
 
 from ase.io.vasp import read_vasp_out
-#from ase.thermochemistry import HarmonicThermo
 
 from .inputreader import parse_arguments, read_vasp_hessian, write_internal, write_userinstr, print_mode_info
 from .vibrations import get_harmonic_vibrations
