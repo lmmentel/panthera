@@ -69,7 +69,7 @@ def main():
 
         print('\n' + ' Vibrational frequencies in [cm^-1] '.center(50, '='), end='\n\n')
         print('        {0:^20s} {1:^20s}'.format('real', 'imag'))
-        for i, v in enumerate(freqs):
+        for i, v in enumerate(freqs, start=1):
             print('{0:5d} : '.format(i), '{0:20.10f} {1:20.10f}'.format(v.real, v.imag))
 
         # convert frequencies from [cm^-1] to [Hz] and get vib. energies in Joules
