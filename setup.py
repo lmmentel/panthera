@@ -24,6 +24,7 @@ setup(
     entry_points = {
         'console_scripts' : [
             'panther = panther.panther:main',
+            'plotmode = panther.plotting:main',
         ]
     },
     license = open('LICENSE.rst').read(),
