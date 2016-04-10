@@ -204,8 +204,4 @@ def get_harmonic_vibrations(job, atoms, hessian):
 
     freq = np.sort(freq)[::-1]
 
-    print('Vibrational frequencies in [cm^-1]')
-    for i, v in enumerate(freq, start=1):
-        print('{0:5d} : '.format(i), '{0:20.10f} {1:20.10f}'.format(v.real, v.imag))
-
-    return freq.real
+    return freq

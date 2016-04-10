@@ -11,6 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   Installation <install>
    API Reference <_reference/modules>
 
 Indices and tables

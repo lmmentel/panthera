@@ -275,8 +275,8 @@ class HarmonicThermo(Thermochemistry):
                 Temperature in `K`
         '''
 
-        print('\n' + 'THERMOCHEMISTRY'.center(45, '='))
-        print('\n\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa\n'.format(T, self.conditions['pressure']))
+        print('\n' + ' THERMOCHEMISTRY '.center(45, '='), end='\n\n')
+        print('\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa'.format(T, self.conditions['pressure']), end='\n\n')
         print('-'*45)
 
         print('Partition functions:')
@@ -316,7 +316,7 @@ class AnharmonicThermo(Thermochemistry):
         df : pandas.DataFrame
             DataFrame with the anharmonic data at a given temperature, must have the following columns:
                 - ``freq`` frequency of a given mode in cm^-1
-                - ``zpve`` zero point vibrational energy contribution from a given mode in Joules
+                - ``zpve`` zero point vibrational energy contribution from a given mode in kJ/mol
                 - ``qvib`` vibrational partition function contribution from a given mode
                 - ``U`` internal energy contribution from a given mode
                 - ``S`` entropy contribution from a given mode
@@ -338,7 +338,7 @@ class AnharmonicThermo(Thermochemistry):
         Calculate the Zero Point Vibrational Energy (ZPVE) in kJ/mol
         '''
 
-        return self.df.zpve.sum()*Avogadro*1.0e-3
+        return self.df.zpve.sum()
 
     def get_qvibrational(self, uselog=True):
         '''
@@ -377,8 +377,8 @@ class AnharmonicThermo(Thermochemistry):
                 Temperature in `K`
         '''
 
-        print('\n' + 'THERMOCHEMISTRY'.center(45, '='))
-        print('\n\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa\n'.format(T, self.conditions['pressure']))
+        print('\n' + ' THERMOCHEMISTRY '.center(45, '='), end='\n\n')
+        print('\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa'.format(T, self.conditions['pressure']), end='\n\n')
         print('-'*45)
 
         print('Partition functions:')

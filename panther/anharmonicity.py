@@ -5,7 +5,9 @@ import os
 import numpy as np
 import pandas as pd
 
-from scipy.constants import value, Boltzmann, Avogadro
+from scipy.constants import value, Boltzmann, Avogadro, Planck, gas_constant
+
+from .inputreader import read_em_freq, print_mode_info
 
 def factsqrt(m, n):
     '''
@@ -143,8 +145,7 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     QVIB_THRESH = 1.0e-8
     FREQ_THRESH = 1.0e-6
 
-    cols = ['type', 'freq', 'mass', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']
-    data = pd.read_csv(fname, sep=r'\s+', engine='python', names=cols)
+    data = read_em_freq(fname)
 
     nvibdof = get_vibdof(atoms, job, system)
 
@@ -155,7 +156,7 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     invcm2au = 100*value('inverse meter-hartree relationship')
     kT = Boltzmann*temp
 
-    df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'converged', 'info', 'rank'],
+    df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'converged', 'info', 'rank', 'type'],
                       index=pd.Index(np.arange(nvibdof), name='mode'), dtype=float)
 
     for mode, row in data.iterrows():
@@ -170,7 +171,7 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
 
             while not terminate:
 
-                hamil = get_hamiltonian(rank, row.freq*invcm2au, row.mass, row[cols[-7:]].values)
+                hamil = get_hamiltonian(rank, row.freq*invcm2au, row.mass, row.loc['a0':'a6'].values)
                 w, v = np.linalg.eig(hamil)
                 w = np.sort(w)
                 qvib = np.sum(np.exp(-w*au2joule/kT))
@@ -179,7 +180,7 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
                     deltaq = 2.0*qvib
 
                 anhfreq = (w[1] - w[0])/invcm2au
-                zpve = w[0]*au2joule
+                zpve = w[0]*au2joule*1.0e-3*Avogadro
                 U, S = get_anh_state_functions(w*au2joule, temp)
 
                 terminate = (np.abs(qvib - qvib_last) < QVIB_THRESH)\
@@ -187,9 +188,9 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
 
                 if terminate:
                     if anhfreq < row.freq:
-                        row = (anhfreq, zpve, qvib, U, S, True, 'OK', rank)
+                        anh = (anhfreq, zpve, qvib, U, S, True, 'OK', rank, row.type.strip())
                     else:
-                        row = (anhfreq, zpve, qvib, U, S, True, 'AGTH', rank)
+                        anh = (anhfreq, zpve, qvib, U, S, True, 'AGTH', rank, row.type.strip())
                 else:
                     if w[0] > 0.0 and abs(qvib - qvib_last) < 1.5*deltaq:
                         rank += 1
@@ -197,33 +198,68 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
                         qvib_last = qvib
                         freq_last = w[0]
                     else:
-                        row = (anhfreq, zpve, qvib, U, S, False, 'CP', rank)
+                        anh = (anhfreq, zpve, qvib, U, S, False, 'CP', rank, row.type.strip())
                         break
 
                     if niter >= MAXITER:
-                        row = (anhfreq, zpve, qvib, U, S, False, 'MAXITER', rank)
+                        anh = (anhfreq, zpve, qvib, U, S, False, 'MAXITER', rank, row.type.strip())
                         break
 
                 niter += 1
 
-            df.iloc[mode] = row
+            df.iloc[mode] = anh
 
     df['rank'] = df['rank'].astype(int)
     return df
 
-def merge_vibs(anh6, anh4, harmonic=None):
+def merge_vibs(anh6, anh4, T, verbose=True):
 
+    harmonic = harmonic_df('em_freq', T)
+
+    print('\n' + ' Thermochemistry per mode hamonic order T = {} '.format(T).center(80, '='), end='\n\n')
+    print_mode_info(harmonic)
+    
     anh6['order'] = 6
     anh4['order'] = 4
     
+    if verbose:
+        print('\n' + ' Thermochemistry per mode hamonic order T = {} '.format(T).center(80, '='), end='\n\n')
+        print_mode_info(harmonic)
+        print('\n' + ' Thermochemistry per mode 6th order T = {} '.format(T).center(80, '='), end='\n\n')
+        print_mode_info(anh6)
+        print('\n' + ' Thermochemistry per mode 4th order T = {} '.format(T).center(80, '='), end='\n\n')
+        print_mode_info(anh4)
+
     df = pd.DataFrame(columns=anh6.columns, index=anh6.index)
 
     df.update(anh4[anh4['converged']])
     df.update(anh6[anh6['info'] == 'OK'])
 
+    for col in ['freq', 'zpve', 'qvib', 'U', 'S']:
+        df[col] = df[col].astype(float)
+
     if df.isnull().any(axis=1).any():
         print(df)
         raise ValueError('There are missing data after merge')
+
+    return df
+
+def harmonic_df(fname, T):
+
+    data = read_em_freq(fname)
+
+    df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'energy', 'type'],
+                      index=pd.Index(np.arange(data.shape[0]), name='mode'), dtype=float)
+
+    kT = Boltzmann * T
+    df['type'] = 'H'
+    df['freq'] = data['freq']
+    df['energy'] = Planck*df['freq']*100.0*value('inverse meter-hertz relationship')
+    df = df[df['freq'] > 0.0]
+    df['zpve'] = 0.5*df['energy']*1.0e-3*Avogadro
+    df['qvib'] = 1.0/(1.0 - np.exp(-df['energy']/kT))
+    df['U'] = df['zpve'] + 1.0e-3*gas_constant*df['energy']/(np.exp(df['energy']/kT) -1.0)/Boltzmann
+    df['S'] = 1.0e-3*gas_constant*(df['energy']/(np.exp(df['energy']/kT) -1.0)/kT - np.log(1.0 - np.exp(-df['energy']/kT)))
 
     return df
 

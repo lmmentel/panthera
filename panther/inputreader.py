@@ -24,7 +24,7 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('command',
-                        choices=('writeinp', 'harmonic', 'anharmonic'),
+                        choices=('convert', 'harmonic', 'anharmonic'),
                         help='choose what to do')
     parser.add_argument('config',
                         help='file with the configuration parameters for thermo')
@@ -34,15 +34,17 @@ def parse_arguments():
         raise ValueError('Specified file <{}> does not exist'.format(args.config))
 
     defaults = {
-        'Tinitial'     : '303.15',
-        'Tfinal'       : '303.15',
-        'Tstep'        : '0.0',
-        'pressure'     : '1.0',
-        'translations' : 'true',
-        'rotations'    : 'true',
-        'pointgroup'   : 'C1',
-        'phase'        : 'gas',
-        'code'         : None,
+        'Tinitial'        : '303.15',
+        'Tfinal'          : '303.15',
+        'Tstep'           : '0.0',
+        'pressure'        : '1.0',
+        'translations'    : 'true',
+        'rotations'       : 'true',
+        'pointgroup'      : 'C1',
+        'phase'           : 'gas',
+        'code'            : None,
+        'internal_fname'  : 'default',
+        'eigenhess_fname' : 'userinstr',
     }
 
     config = cp.ConfigParser(defaults=defaults, allow_no_value=True)
@@ -57,6 +59,8 @@ def parse_arguments():
     job = {}
     job['proj_translations'] = config.getboolean('job', 'translations')
     job['proj_rotations'] = config.getboolean('job', 'rotations')
+    job['internal_fname'] = config.get('job', 'internal_fname')
+    job['eigenhess_fname'] = config.get('job', 'eigenhess_fname')
     job['code'] = config.get('job', 'code')
 
     system = {}
@@ -144,12 +148,12 @@ def read_em_freq(fname):
     data = pd.read_csv(fname, sep=r'\s+', engine='python', names=cols)
     return data
 
-def write_internal(atoms, hessian, filename='newdefault'):
+def write_internal(atoms, hessian, job):
     '''
     Write a file with the system details
     '''
 
-    with open(filename, 'w') as fout:
+    with open(job['internal_fname'], 'w') as fout:
 
         fout.write('start title:\n')
         fout.write('title string\n')
@@ -181,4 +185,46 @@ def write_internal(atoms, hessian, filename='newdefault'):
             fout.write(' '.join(['{0:15.8f}'.format(x) for x in row])  + '\n')
         fout.write('end hessian matrix\n')
 
-    print('wrote file: {} with the data in internal format'.format(filename))
+    print('wrote file: "{}" with the data in internal format'.format(job['internal_fname']))
+
+def write_userinstr(cond, job, system):
+    '''
+    Write an input file for EIGEN_HESS_ANHARM_INT
+    '''
+
+    projtran = 'YES' if job['proj_translations'] else 'NO'
+    projrot = 'YES' if job['proj_rotations'] else 'NO'
+    phase = 'GP' if system['phase'] == 'gas' else 'SP'
+
+    fields = [str(cond['Tinitial']), str(cond['Tfinal']), str(cond['Tstep']),
+              str(cond['pressure']), projtran, projrot, system['pointgroup'],
+              phase, job['code']]
+
+    with open(job['eigenhess_fname'], 'w') as fuser:
+        fuser.write('\n'.join(fields))
+
+    print('wrote file: "{}" with the input for eigenhess'.format(job['eigenhess_fname']))
+
+def print_mode_info(df):
+    'After calculating all the anharmonic modes print the per mode themochemical functions'
+
+    fmts = {
+        'freq' : '{:12.6f}'.format,
+        'zpve' : '{:12.6f}'.format,
+        'qvib' : '{:14.6e}'.format,
+        'U'    : '{:12.6f}'.format,
+        'S'    : '{:14.6e}'.format,
+        }
+    
+    # header with the units
+    header = '     {0:>12s} {1:>12s} {2:>14s} {3:>12s} {4:>14s}'
+    print(header.format('[cm^-1]', '[kJ/mol]', ' ', '[kJ/mol]', '[kJ/mol*K]'))
+
+    print(df.to_string(formatters=fmts))
+
+    print('INFO codes')
+    print('-'*10)
+    print('OK      : Succesfully converged the anharmonic eigenproblem')
+    print('AGTH    : Anharmonic frequency greater than the harmonic')
+    print('CE      : Convergence Error')
+    print('MAXITER : Maximum number of iterations exhausted')
