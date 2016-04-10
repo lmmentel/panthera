@@ -282,13 +282,19 @@ class HarmonicThermo(Thermochemistry):
                 Temperature in `K`
         '''
 
+        if self.system['phase'] == 'solid':
+            lnqtrans = lnqrot = 0.0
+        else:
+            lnqtrans = np.log(self.get_qtranslational(T))
+            lnqrot = np.log(self.get_qrotational(T))
+
         print('\n' + ' THERMOCHEMISTRY '.center(45, '='), end='\n\n')
         print('\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa'.format(T, self.conditions['pressure']), end='\n\n')
         print('-'*45)
 
         print('Partition functions:')
-        print('    {0:<20s} : {1:10.3f}'.format('ln qtranslational', np.log(self.get_qtranslational(T))))
-        print('    {0:<20s} : {1:10.3f}'.format('ln qrotational', np.log(self.get_qrotational(T))))
+        print('    {0:<20s} : {1:10.3f}'.format('ln qtranslational', lnqtrans))
+        print('    {0:<20s} : {1:10.3f}'.format('ln qrotational', lnqrot))
         print('    {0:<20s} : {1:10.3f}'.format('ln qvibrational', self.get_qvibrational(T, uselog=True)))
         print('-'*45)
         internal = self.get_translational_energy(T) + self.get_rotational_energy(T) + self.get_zpve() + self.get_vibrational_energy(T)
@@ -384,13 +390,19 @@ class AnharmonicThermo(Thermochemistry):
                 Temperature in `K`
         '''
 
+        if self.system['phase'] == 'solid':
+            lnqtrans = lnqrot = 0.0
+        else:
+            lnqtrans = np.log(self.get_qtranslational(T))
+            lnqrot = np.log(self.get_qrotational(T))
+
         print('\n' + ' THERMOCHEMISTRY '.center(45, '='), end='\n\n')
         print('\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa'.format(T, self.conditions['pressure']), end='\n\n')
         print('-'*45)
 
         print('Partition functions:')
-        print('    {0:<20s} : {1:10.3f}'.format('ln qtranslational', np.log(self.get_qtranslational(T))))
-        print('    {0:<20s} : {1:10.3f}'.format('ln qrotational', np.log(self.get_qrotational(T))))
+        print('    {0:<20s} : {1:10.3f}'.format('ln qtranslational', lnqtrans))
+        print('    {0:<20s} : {1:10.3f}'.format('ln qrotational', lnqrot))
         print('    {0:<20s} : {1:10.3f}'.format('ln qvibrational', self.get_qvibrational(uselog=True)))
         print('-'*45)
         internal = self.get_translational_energy(T) + self.get_rotational_energy(T)\
