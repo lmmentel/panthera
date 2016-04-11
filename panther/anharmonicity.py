@@ -157,10 +157,9 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     kT = Boltzmann*temp
 
     df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'converged', 'info', 'rank', 'type'],
-                      index=pd.Index(np.arange(nvibdof), name='mode'), dtype=float)
+                      index=pd.Index(np.arange(1, nvibdof + 1), name='mode'), dtype=float)
 
     for mode, row in data.iterrows():
-
         if row.type.strip() == 'A':
 
             terminate = False
@@ -207,7 +206,7 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
 
                 niter += 1
 
-            df.iloc[mode] = anh
+            df.loc[mode] = anh
 
     df['rank'] = df['rank'].fillna(0).astype(int)
     return df
@@ -246,7 +245,7 @@ def harmonic_df(fname, T):
     data = read_em_freq(fname)
 
     df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'energy', 'type'],
-                      index=pd.Index(np.arange(data.shape[0]), name='mode'), dtype=float)
+                      index=pd.Index(np.arange(1, data.shape[0] + 1), name='mode'), dtype=float)
 
     kT = Boltzmann * T
     df['type'] = 'H'

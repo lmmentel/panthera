@@ -76,7 +76,7 @@ def plot_mode(mode, pes, coeff6, coeff4):
     plt.plot(pes[mode][:, 0], harm(pes[mode][:, 0]), marker='o', color=cp[2], linewidth=lw,
              markersize=ms, markerfacecolor='none', markeredgecolor=cp[2], markeredgewidth=mew, label='harmonic')
     
-    plt.title('Mode # {}'.format(mode))
+    plt.title(r'Mode # {0:d}, $\nu$ = {1:6.2f} [cm$^{{-1}}$]'.format(mode, coeff6.loc[mode, 'freq']))
     plt.xlabel('$\Delta x$')
     plt.ylabel('$\Delta E$')
     plt.legend(loc='best', frameon=False)
@@ -103,5 +103,8 @@ def main():
         pes = parse_pes(args.pes)
     else:
         raise OSError('File {} does not exist'.format(args.pes))
+
+    if args.mode > max(pes.keys()):
+        raise ValueError('Mode number {} unavailable, max mode number is: {}'.format(args.mode, max(pes.keys())))
 
     plot_mode(args.mode, pes, coeff6, coeff4)

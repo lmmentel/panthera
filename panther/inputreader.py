@@ -146,6 +146,9 @@ def read_em_freq(fname):
 
     cols = ['type', 'freq', 'mass', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']
     data = pd.read_csv(fname, sep=r'\s+', engine='python', names=cols)
+    data.set_index(np.arange(1, data.shape[0] + 1), inplace=True)
+    for col in cols[1:]:
+        data[col] = data[col].astype(float)
     return data
 
 def write_internal(atoms, hessian, job):
