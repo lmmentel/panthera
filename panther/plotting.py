@@ -40,6 +40,7 @@ def parse_pes(fname):
 def harmonic(x, freq, mu):
     '''
     Calculate the harmonic potential
+
     Args:
         x : float of numpy.array
             Coordinate

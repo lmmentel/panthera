@@ -68,8 +68,7 @@ class Thermochemistry(object):
 
     def get_qtranslational(self, T):
         '''
-	    Calculate the translational partition function for a mole of ideal gas at temperature ``T``
-        and pressure ``p``.
+	    Calculate the translational partition function for a mole of ideal gas at temperature ``T`` and pressure ``p``
 
 		.. math::
 
