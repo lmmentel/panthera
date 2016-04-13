@@ -25,6 +25,7 @@ setup(
         'console_scripts' : [
             'panther = panther.panther:main',
             'plotmode = panther.plotting:main',
+            'writemodes = panther.inputreader:write_modes_cli',
         ]
     },
     license = open('LICENSE.rst').read(),

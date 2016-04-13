@@ -7,6 +7,9 @@ import re
 import argparse
 import os
 import sys
+import io
+
+from collections import defaultdict
 
 if sys.version_info.major == 3:
     import configparser as cp
@@ -15,6 +18,9 @@ else:
 
 import numpy as np
 import pandas as pd
+
+from ase.io.vasp import read_vasp
+from ase.io import Trajectory
 
 def parse_arguments():
     '''
@@ -218,7 +224,7 @@ def print_mode_info(df):
         'U'    : '{:12.6f}'.format,
         'S'    : '{:14.6e}'.format,
         }
-    
+
     # header with the units
     header = '     {0:>12s} {1:>12s} {2:>14s} {3:>12s} {4:>14s}'
     print(header.format('[cm^-1]', '[kJ/mol]', ' ', '[kJ/mol]', '[kJ/mol*K]'))
@@ -231,3 +237,54 @@ def print_mode_info(df):
     print('AGTH    : Anharmonic frequency greater than the harmonic')
     print('CE      : Convergence Error')
     print('MAXITER : Maximum number of iterations exhausted')
+
+def write_modes(filename='POSCARs'):
+    '''
+    Convert a file with multiple geometries representing vibrational modes
+    in ``POSCAR``/``CONTCAR`` format into trajectory files with modes.
+    '''
+
+    pat = re.compile(r'Mode\s*=\s*(\d+)\s*point\s*=\s*(-?\d+)')
+
+    if os.path.exists(filename):
+        with open(filename, 'r') as fdata:
+            poscars = fdata.read()
+    else:
+        raise OSError('File "{}" does not exist'.format(filename))
+
+    parsed = [x for x in pat.split(poscars) if x != ' ']
+
+    it = iter(parsed)
+    dd = defaultdict(list)
+    for i, j, item in zip(it, it, it):
+        dd[i].append(item)
+
+    for mode, geometries in dd.items():
+        traj = Trajectory('mode.{}.traj'.format(mode), 'w')
+        for geometry in geometries:
+            atoms = read_vasp(io.StringIO(geometry))
+            traj.write(atoms)
+        traj.close()
+
+def write_modes_cli():
+    '''
+    Parse the filename with multiple POSCARS form command line and write trajectory files
+    with vibrational modes
+    '''
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filename',
+                        default='POSCARs',
+                        help='name of the file with geometries')
+    parser.add_argument('-d', '--dir',
+                        default='modes',
+                        help='directory to put the modes')
+    args = parser.parse_args()
+
+    args.filename = os.path.abspath(args.filename)
+    
+    if not os.path.exists(args.dir):
+        os.makedirs(args.dir)
+
+    os.chdir(args.dir)
+    write_modes(args.filename)
