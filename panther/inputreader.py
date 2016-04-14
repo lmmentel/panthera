@@ -174,7 +174,8 @@ def write_internal(atoms, hessian, job):
 
         fout.write('start atoms\n')
         for atom in atoms:
-            fout.write('{0:2s} {1:12.6f} {2:12.6f} {2:12.6f} T T T\n'.format(atom.symbol, *tuple(atom.position)))
+            fout.write('{0:2s} {1:12.6f} {2:12.6f} {2:12.6f} T T T\n'.format(atom.symbol,
+                                                                            *tuple(atom.position)))
         fout.write('end atoms\n')
 
         fout.write('start energy\n')
@@ -282,7 +283,7 @@ def write_modes_cli():
     args = parser.parse_args()
 
     args.filename = os.path.abspath(args.filename)
-    
+
     if not os.path.exists(args.dir):
         os.makedirs(args.dir)
 

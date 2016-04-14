@@ -4,19 +4,70 @@
 import numpy as np
 from scipy.constants import value, pi, Avogadro, Planck, hbar, Boltzmann, gas_constant
 
+def constraints2mask(atoms):
+    '''
+    Convert constraints from default ase objects to VASP compatible numpy array
+    of boolean triples describing whether atomic degress of freedom are fixed in
+    x, y, z dimensions
+
+    Args:
+        atoms : ase.Atoms
+            ASE atoms object
+
+    Return:
+        slfags : numpy.array
+            Boolean array with the size `N` x 3 where `N` is the number of atoms
+    '''
+
+    from ase.constraints import FixAtoms, FixScaled, FixedPlane, FixedLine
+
+    if atoms.constraints:
+        sflags = np.zeros((len(atoms), 3), dtype=bool)
+        for constr in atoms.constraints:
+            if isinstance(constr, FixScaled):
+                sflags[constr.a] = constr.mask
+            elif isinstance(constr, FixAtoms):
+                sflags[constr.index] = [True, True, True]
+            elif isinstance(constr, FixedPlane):
+                mask = np.all(np.abs(np.cross(constr.dir, atoms.cell)) < 1e-5, axis=1)
+                if sum(mask) != 1:
+                    raise RuntimeError(
+                        'VASP requires that the direction of FixedPlane '
+                        'constraints is parallel with one of the cell axis')
+                sflags[constr.a] = mask
+            elif isinstance(constr, FixedLine):
+                mask = np.all(np.abs(np.cross(constr.dir, atoms.cell)) < 1e-5, axis=1)
+                if sum(mask) != 1:
+                    raise RuntimeError(
+                        'VASP requires that the direction of FixedLine '
+                        'constraints is parallel with one of the cell axis')
+                sflags[constr.a] = ~mask
+    else:
+        sflags = np.ones((len(atoms), 3), dtype=bool)
+    return sflags
+
 def get_total_mass(atoms):
     '''
-    Calculate the total mass of unconstrained atoms.
+    Calculate the total mass of unconstrained atoms in kg.
 
-    The masses are assumed to be in the ``masses`` (np.array) attribute and the flags for coordinates
-    are in ``free`` attribute
+    The masses are assumed to be in the ``masses`` (np.array) attribute and the flags for
+    coordinates are in ``free`` attribute
+
+    Args:
+        atoms : ase.Atoms
+            ASE Atoms object
+
+    Returns:
+        mass : float
+            Mass of the unconstrained atoms in kg
     '''
 
     atmass = value('atomic mass unit-kilogram relationship')
     if len(atoms.constraints) == 0:
         return np.sum(atoms.get_masses()) * atmass
     else:
-        raise NotImplementedError('not yet')
+        mask = constraints2mask(atoms)
+        return np.sum(atoms.get_masses()[np.any(mask, axis=1)]) * atmass
 
 class Thermochemistry(object):
 
