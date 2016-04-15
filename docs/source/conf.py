@@ -27,7 +27,7 @@ from sphinx import apidoc
 
 MOCK_MODULES = ['argparse', 'ase', 'ase.io.', 'ase.io.vasp', 'numpy', 'numpy.ma', 'numpy.linalg',
                 'matplotlib', 'matplotlib.pyplot', 'scipy', 'scipy.constants', 'scipy.optimize',
-                'scipy.linalg', 'pandas', 'seaborn']
+                'scipy.linalg', 'pandas', 'seaborn', 'ase.io.trajectory']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()

@@ -87,9 +87,12 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', type=int, help='number of the mode to be printed')
-    parser.add_argument('-s', '--sixth', default='em_freq', help='file with sixth order polynomial fit')
-    parser.add_argument('-f', '--fourth', default='em_freq_4th', help='file with fourth order polynomial fit')
-    parser.add_argument('-p', '--pes', default='test_anharm', help='file with the potential energy surface (PES)')
+    parser.add_argument('-s', '--sixth', default='em_freq',
+                        help='file with sixth order polynomial fit, default="em_freq"')
+    parser.add_argument('-f', '--fourth', default='em_freq_4th',
+                        help='file with fourth order polynomial fit, default="em_freq_4th"')
+    parser.add_argument('-p', '--pes', default='test_anharm',
+                        help='file with the potential energy surface (PES), default="test_anharm"')
     args = parser.parse_args()
 
     if os.path.exists(args.sixth):

@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    Installation <install>
+   User guide <userguide>
    API Reference <_reference/modules>
 
 Indices and tables

@@ -1,6 +1,17 @@
 Installation
 ============
 
+Dependencies
+------------
+
+    - `numpy <http://www.numpy.org/>`_
+    - `scipy <https://www.scipy.org/>`_
+    - `pandas <http://pandas.pydata.org/>`_
+    - `matplotlib <http://matplotlib.org/>`_
+    - `seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_
+    - `future <https://pypi.python.org/pypi/future>`_ 
+
+
 The recommended installation method is with pip_. The latest version
 can be installed directly from `bitbucket repository`_:
 

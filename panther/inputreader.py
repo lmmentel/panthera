@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 from ase.io.vasp import read_vasp
-from ase.io import Trajectory
+from ase.io.trajectory import Trajectory
 
 def parse_arguments():
     '''
@@ -276,10 +276,10 @@ def write_modes_cli():
     parser = argparse.ArgumentParser()
     parser.add_argument('filename',
                         default='POSCARs',
-                        help='name of the file with geometries')
+                        help='name of the file with geometries, default="POSCARs"')
     parser.add_argument('-d', '--dir',
                         default='modes',
-                        help='directory to put the modes')
+                        help='directory to put the modes, default="modes"')
     args = parser.parse_args()
 
     args.filename = os.path.abspath(args.filename)
