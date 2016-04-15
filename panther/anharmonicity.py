@@ -1,6 +1,8 @@
 
 'Methods for solving the one dimentional vibrational eigenproblem'
 
+from __future__ import print_function, division, absolute_import
+
 import os
 import numpy as np
 import pandas as pd
@@ -150,7 +152,7 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     nvibdof = get_vibdof(atoms, job, system)
 
     print('Number of vibrational DOF : {0:5d}'.format(nvibdof))
-    print('Number of read frequencies: {0:5d}'.format(data.shape[0]))
+    print('Number of read frequencies from {0:s}: {1:5d}'.format(fname, data.shape[0]))
 
     au2joule = value('hartree-joule relationship')
     invcm2au = 100*value('inverse meter-hartree relationship')
@@ -219,7 +221,7 @@ def merge_vibs(anh6, anh4, T, verbose=True):
     anh4['order'] = 4
     
     if verbose:
-        print('\n' + ' Thermochemistry per mode hamonic T = {} '.format(T).center(80, '='), end='\n\n')
+        print('\n' + ' Thermochemistry per mode harmonic T = {} '.format(T).center(80, '='), end='\n\n')
         print_mode_info(harmonic)
         print('\n' + ' Thermochemistry per mode 6th order T = {} '.format(T).center(80, '='), end='\n\n')
         print_mode_info(anh6)
@@ -235,8 +237,10 @@ def merge_vibs(anh6, anh4, T, verbose=True):
         df[col] = df[col].astype(float)
 
     if df.isnull().any(axis=1).any():
-        print(df)
-        raise ValueError('There are missing data after merge')
+        df.fillna(harmonic)
+
+    print('\n' + ' Final data to be used for thermochemistry T = {} '.format(T).center(80, '='), end='\n\n')
+    print_mode_info(df)
 
     return df
 

@@ -88,10 +88,7 @@ def main():
         for temp in temperature_range(conditions):
 
             df6 = anharmonic_frequencies(atoms, temp, job, system, fname='em_freq')
-            df6.to_pickle('anh6.pkl')
-
             df4 = anharmonic_frequencies(atoms, temp, job, system, fname='em_freq_4th')
-            df4.to_pickle('anh4.pkl')
 
             df = merge_vibs(df6, df4, temp)
 

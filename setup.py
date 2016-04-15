@@ -20,6 +20,7 @@ setup(
         'numpy >= 1.7',
         'pandas',
         'scipy',
+        'future',
     ],
     entry_points = {
         'console_scripts' : [

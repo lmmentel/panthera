@@ -1,6 +1,10 @@
 
 'Method for calcualting thermochemistry'
 
+from __future__ import print_function, division, absolute_import
+from builtins import (bytes, str, open, super, range,
+                      zip, round, input, int, pow, object)
+
 import numpy as np
 from scipy.constants import value, pi, Avogadro, Planck, hbar, Boltzmann, gas_constant
 

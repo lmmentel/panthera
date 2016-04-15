@@ -173,7 +173,6 @@ def get_harmonic_vibrations(job, atoms, hessian):
     '''
 
     # threshold for keeping the small eigenvalues of the hamiltonian
-    # THRESH = np.finfo(np.float32).eps
     THRESH = 1.0e-10
     # conversion fator from eV/A^2 to cm^-1
     vasp2invcm = 1.0e8*np.sqrt(elementary_charge)/(np.sqrt(value('atomic mass constant'))*2.0*pi*speed_of_light)
