@@ -15,13 +15,6 @@ setup(
     author_email = "lmmentel@gmail.com",
     description = "Functions for calculating thermochemistry with anharmonic corrections",
     include_package_data = True,
-    install_requires = [
-        'ase',
-        'numpy >= 1.7',
-        'pandas',
-        'scipy',
-        'future',
-    ],
     entry_points = {
         'console_scripts' : [
             'panther = panther.panther:main',

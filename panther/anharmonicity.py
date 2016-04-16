@@ -62,7 +62,8 @@ def get_hamiltonian(rank, freq, mass, coeffs):
 
     .. math::
 
-       \hat{H} = -\\frac{\hbar^2}{2}\\frac{\partial^2}{\partial \\boldsymbol{Q}^2} + \sum_{\mu=0}^{6}c_{\mu}\\boldsymbol{Q}^{\mu}
+       \hat{H} = -\\frac{\hbar^2}{2}\\frac{\partial^2}{\partial \\boldsymbol{Q}^2}
+               + \sum_{\mu=0}^{6}c_{\mu}\\boldsymbol{Q}^{\mu}
 
     and :math:`\Psi_{i}` are the standard harmonic oscillator functions.
 
@@ -284,7 +285,8 @@ def get_anh_state_functions(eigenvals, T):
 
        U = N_{A}\\frac{\sum^{n}_{i=1} \epsilon_{i}\exp(\epsilon_{i}/k_{B}T) }{\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T)}
 
-       S = N_{A}k_{B}\log(\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T)) + \\frac{N_{A}}{T}\\frac{\sum^{n}_{i=1} \epsilon_{i}\exp(\epsilon_{i}/k_{B}T) }{\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T)}
+       S = N_{A}k_{B}\log(\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T))
+       + \\frac{N_{A}}{T}\\frac{\sum^{n}_{i=1} \epsilon_{i}\exp(\epsilon_{i}/k_{B}T) }{\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T)}
 
     Args:
         eigenvals : numpy.array
