@@ -123,6 +123,12 @@ to plot the first mode only requires the argument ``1``
 
    plotmode 1
 
+.. image:: gfx/mode1.png
+    :width: 800px
+    :align: center
+    :alt: Plot of the mode potential
+
+
 .. _writemodes-label:
 
 writemodes
