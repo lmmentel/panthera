@@ -54,6 +54,18 @@ def get_hamiltonian(rank, freq, mass, coeffs):
     Compose the Hamiltonian matrix for the anharmonic oscillator with the potential described by
     the sixth order polynomial.
 
+    .. math::
+
+       H_{ij} = \left\langle \Psi_{i} \left| \hat{H} \\right| \Psi_{j} \\right\\rangle
+
+    where
+
+    .. math::
+
+       \hat{H} = -\\frac{\hbar^2}{2}\\frac{\partial^2}{\partial \\boldsymbol{Q}^2} + \sum_{\mu=0}^{6}c_{\mu}\\boldsymbol{Q}^{\mu}
+
+    and :math:`\Psi_{i}` are the standard harmonic oscillator functions.
+
     Args:
         rank : int
             Rank of the Hamiltonian matrix
