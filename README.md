@@ -19,3 +19,7 @@ pip install -U [--user] ./panther
 ```
 [bitbucket repository]: https://bitbucket.org/lukaszmentel/panther
 [pip]: https://pip.pypa.io/en/stable/
+
+## Documentation
+
+The documentatioan can be at [panther.readthedocs.org](http://panther.readthedocs.org).
