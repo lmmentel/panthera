@@ -32,11 +32,11 @@ The panther script takes two command line argument
 
 
 The input file is in the standard condif file format and contains three sections
-``conditions``, ``job`` and ``system`` defining the parameters. 
+``conditions``, ``job`` and ``system`` defining the parameters.
 
 conditions
 ^^^^^^^^^^
-    
+
     pressure : float
         Pressure in MPa
     Tinitial : float
@@ -56,7 +56,7 @@ conditions
 
 job
 ^^^
-    
+
     translations : bool
         If True the translational degrees of freedom will be projected out from the hessian
     rotations : bool
@@ -74,7 +74,7 @@ job
 
 system
 ^^^^^^
-    
+
     pointgroup : str
         Point group symbol of the system
     phase : str
@@ -134,8 +134,8 @@ to plot the first mode only requires the argument ``1``
 writemodes
 ----------
 
-This program takes the single file with continuous geometries in VASP POSCAR format as input
-and writes separate file in ASE trajectory format per node to a specified directory.
+This program takes the single file with continuous geometries in `VASP POSCAR <http://cms.mpi.univie.ac.at/vasp/guide/node59.html>`_
+format as input and writes separate file in ASE trajectory format per node to a specified directory.
 
 .. code-block:: bash
 
