@@ -4,6 +4,7 @@ from __future__ import print_function, division
 from scipy.constants import hbar, angstrom, value, elementary_charge, value, pi, speed_of_light
 import numpy as np
 
+from .thermochemistry import constraints2mask
 
 def get_levicivita():
     'Get the Levi_civita symemtric tensor'
@@ -175,7 +176,8 @@ def get_harmonic_vibrations(job, atoms, hessian):
     # threshold for keeping the small eigenvalues of the hamiltonian
     THRESH = 1.0e-10
     # conversion fator from eV/A^2 to cm^-1
-    vasp2invcm = 1.0e8*np.sqrt(elementary_charge)/(np.sqrt(value('atomic mass constant'))*2.0*pi*speed_of_light)
+    vasp2invcm = 1.0e8*np.sqrt(elementary_charge)\
+                /(np.sqrt(value('atomic mass constant'))*2.0*pi*speed_of_light)
 
     ndof = hessian.shape[0]
 

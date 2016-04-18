@@ -123,7 +123,7 @@ to plot the first mode only requires the argument ``1``
 
    plotmode 1
 
-.. image:: gfx/mode1.png
+.. image:: gfx/mode1-potential.png
     :width: 800px
     :align: center
     :alt: Plot of the mode potential
@@ -150,3 +150,43 @@ format as input and writes separate file in ASE trajectory format per node to a 
      -h, --help         show this help message and exit
      -d DIR, --dir DIR  directory to put the modes, default="modes"
 
+
+Example
+^^^^^^^
+
+Provided that the ``POSCARs`` file exists we can generate trajectory_ files with the modes with:
+
+.. code-block:: bash
+
+    writemodes POSCARs
+
+which produces the ``mode.X.traj`` files in the ``modes`` directory where ``X`` is the mode number.
+
+We can now generate a set of PNG_ files representing the snapshots of the mode by:
+
+.. code-block:: python
+
+   from ase.io import read, write
+   modes = read('mode.1.traj', index=':')
+
+   for i, mode in enumerate(modes):
+       write('{0:0>3d}.pov'.format(i), mode, run_povray=True, rotation='90x', canvas_width=800)
+
+To see the animation we can create an GIF_ file from the previosly generated PNG_ files using
+the ``convert`` program from the ImageMagick_ package:
+
+.. code-block:: bash
+
+   convert -delay 15 -loop 0 *.png mode1-animation.gif
+
+
+.. image:: gfx/mode1-animation.gif
+    :width: 800px
+    :align: center
+    :alt: Mode 1 vibration
+
+
+.. _trajectory: https://wiki.fysik.dtu.dk/ase/ase/trajectory.html
+.. _PNG: https://en.wikipedia.org/wiki/Portable_Network_Graphics
+.. _GIF: https://en.wikipedia.org/wiki/GIF
+.. _ImageMagick: http://www.imagemagick.org/script/index.php
