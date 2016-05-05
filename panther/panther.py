@@ -51,7 +51,7 @@ def main():
     pprint(system)
 
     if args.command == 'convert':
-        atoms = read_vasp_out('OUTCAR', index=-1)
+        atoms = read_vasp_out('OUTCAR', index=0)
         hessian = read_vasp_hessian('OUTCAR')
 
         write_internal(atoms, hessian, job)
