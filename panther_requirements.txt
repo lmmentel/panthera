@@ -1,0 +1,5 @@
+ase
+numpy
+pandas
+scipy
+future
