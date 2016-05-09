@@ -11,14 +11,16 @@ import numpy as np
 
 from ase.io.vasp import read_vasp_out
 
-from .inputreader import parse_arguments, read_vasp_hessian, write_internal, write_userinstr, print_mode_info
+from .inputreader import parse_arguments, read_vasp_hessian, write_internal
 from .vibrations import get_harmonic_vibrations
 from .anharmonicity import anharmonic_frequencies, merge_vibs
 from .thermochemistry import HarmonicThermo, AnharmonicThermo
 
+
 def temperature_range(conditions):
     '''
-    Calculate the temperature grid from the input values and return them as numpy array
+    Calculate the temperature grid from the input values and return them as
+    numpy array
 
     Args:
         conditions : dict
@@ -41,6 +43,7 @@ def temperature_range(conditions):
 
     return temps
 
+
 def main():
     '''The main Thermo program'''
 
@@ -55,7 +58,6 @@ def main():
         hessian = read_vasp_hessian('OUTCAR')
 
         write_internal(atoms, hessian, job)
-        write_userinstr(conditions, job, system)
 
     elif args.command == 'harmonic':
 

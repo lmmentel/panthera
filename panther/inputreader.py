@@ -157,6 +157,7 @@ def read_em_freq(fname):
         data[col] = data[col].astype(float)
     return data
 
+
 def write_internal(atoms, hessian, job):
     '''
     Write a file with the system details
@@ -165,24 +166,24 @@ def write_internal(atoms, hessian, job):
     with open(job['internal_fname'], 'w') as fout:
 
         fout.write('start title:\n')
-        fout.write('title string\n')
+        fout.write('End of frequencies calculation\n')
 
         fout.write('start lattice\n')
         for row in atoms.get_cell():
-            fout.write('{0:15.10f} {1:15.10f} {2:15.10f}\n'.format(*tuple(row)))
+            fout.write('{0:15.9f} {1:15.9f} {2:15.9f}\n'.format(*tuple(row)))
         fout.write('end lattice\n')
 
         fout.write('start atoms\n')
         for atom in atoms:
-            fout.write('{0:2s} {1:12.6f} {2:12.6f} {2:12.6f} T T T\n'.format(atom.symbol,
+            fout.write('{0:2s} {1:15.5f} {2:15.5f} {3:15.5f} T T T\n'.format(atom.symbol,
                                                                             *tuple(atom.position)))
         fout.write('end atoms\n')
 
         fout.write('start energy\n')
-        fout.write('{0:15.10f}\n'.format(atoms.get_potential_energy()))
+        fout.write('{0:15.8f}\n'.format(atoms.get_potential_energy()))
         fout.write('end energy\n')
 
-        if len(atoms)*3 == hessian.shape[0]:
+        if len(atoms) * 3 == hessian.shape[0]:
             hesstype = 'full'
         else:
             hesstype = 'partial'
@@ -192,28 +193,11 @@ def write_internal(atoms, hessian, job):
 
         fout.write('start hessian matrix\n')
         for row in hessian:
-            fout.write(' '.join(['{0:15.8f}'.format(x) for x in row])  + '\n')
+            fout.write(' '.join(['{0:15.8f}'.format(x) for x in row]) + '\n')
         fout.write('end hessian matrix\n')
 
     print('wrote file: "{}" with the data in internal format'.format(job['internal_fname']))
 
-def write_userinstr(cond, job, system):
-    '''
-    Write an input file for EIGEN_HESS_ANHARM_INT
-    '''
-
-    projtran = 'YES' if job['proj_translations'] else 'NO'
-    projrot = 'YES' if job['proj_rotations'] else 'NO'
-    phase = 'GP' if system['phase'] == 'gas' else 'SP'
-
-    fields = [str(cond['Tinitial']), str(cond['Tfinal']), str(cond['Tstep']),
-              str(cond['pressure']), projtran, projrot, system['pointgroup'],
-              phase, job['code']]
-
-    with open(job['eigenhess_fname'], 'w') as fuser:
-        fuser.write('\n'.join(fields))
-
-    print('wrote file: "{}" with the input for eigenhess'.format(job['eigenhess_fname']))
 
 def print_mode_info(df):
     'After calculating all the anharmonic modes print the per mode themochemical functions'
