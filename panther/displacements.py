@@ -7,10 +7,9 @@ from numpy.linalg import inv as npinvert
 
 import ase.io
 
-from panther.vibrations import project
-
 from writeBmat import get_internals
 
+from .vibrations import project
 
 # TODO: this should generate a list/dict of Atoms objects
 #       having displaced coordiantes assigned to atoms, this
@@ -22,7 +21,8 @@ from writeBmat import get_internals
 THR = 1.0e-6
 
 
-def calculate_displacements(atoms, hessian, npoints):
+def calculate_displacements(atoms, hessian, npoints, mode_min=None,
+                            mode_max=None):
     '''
     Calculate displacements in internal coordinates
 
@@ -32,6 +32,10 @@ def calculate_displacements(atoms, hessian, npoints):
         npoints : int
             Number of points to displace structure, the code will calculate
             ``2*npoints`` displacements since + and - directions are taken
+        mode_min : int
+            Smallest mode number
+        mode_max : int
+            Largest mode number
     '''
 
     prm = 1.0 / value('electron mass in u')
@@ -42,6 +46,12 @@ def calculate_displacements(atoms, hessian, npoints):
     ndof = 3 * natoms
     masses = atoms.get_masses()
     pos = atoms.get_positions()
+
+    if mode_min is None:
+        mode_min = 0
+
+    if mode_max is None:
+        mode_max = ndof
 
     coords = pos.ravel() * ang2bohr
 

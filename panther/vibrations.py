@@ -71,20 +71,25 @@ def project_massweighted(args, atoms, ndof, hessian, verbose=False):
     #print('Final Dmat: \n', Dmat)
     #proj_hessian = np.dot(Dmat.T, np.dot(mwhessian, Dmat))
 
-def project(job, atoms, ndof, hessian, verbose=False):
+def project(atoms, hessian, ndof, proj_translations=True,
+            proj_rotations=False, verbose=False):
     '''
     Calculate the hessian with translational and rotational degrees of freedom
     projected out.
 
     Args:
-        job : dict
-            Dictionary with job parameters
         atoms : ase.Atoms
             Atoms object
         ndof : int
             Number of degrees of freedom
         hessian : numpy.array
             Hessian/force constant matrix
+        proj_translations : bool
+            If ``True`` translational degrees of freedom will be projected from
+            the hessian
+        proj_rotations : bool
+            If ``True`` rotational degrees of freedom will be projected from
+            the hessian
     '''
 
     if verbose:
@@ -106,18 +111,18 @@ def project(job, atoms, ndof, hessian, verbose=False):
 
     Dmat = np.zeros((ndof, 6), dtype=float)
     umasses = np.ones(ndof, dtype=float)
-    Dmat[np.arange(ndof), np.tile(np.arange(3), ndof//3)] = np.sqrt(umasses)
+    Dmat[np.arange(ndof), np.tile(np.arange(3), ndof // 3)] = np.sqrt(umasses)
 
-    if job['proj_translations']:
+    if proj_translations:
 
-        Dmat[np.arange(ndof), np.tile(np.arange(3), ndof//3)] = np.sqrt(umasses)
-    
+        Dmat[np.arange(ndof), np.tile(np.arange(3), ndof // 3)] = np.sqrt(umasses)
+
         if verbose:
             print('INFO: Projecting out translations')
             for row in Dmat:
                 print("".join(['{0:15.8f}'.format(x) for x in row]))
 
-    if job['proj_rotations']:
+    if proj_rotations:
 
         Dmat[ ::3, 3] = 0.0
         Dmat[1::3, 3] = -xyzcom[:, 2]
@@ -137,12 +142,12 @@ def project(job, atoms, ndof, hessian, verbose=False):
                 print("".join(['{0:15.8f}'.format(x) for x in row]))
 
     # orthogonalize
-    if job['proj_translations'] and job['proj_rotations']:
+    if proj_translations and proj_rotations:
         q, _ = np.linalg.qr(Dmat)
-    elif job['proj_translations'] and not job['proj_rotations']:
+    elif proj_translations and not proj_rotations:
         q, _ = np.linalg.qr(Dmat[:, :3])
         q = np.hstack((q, Dmat[:, 3:]))
-    elif not job['proj_translations'] and job['proj_rotations']:
+    elif not proj_translations and proj_rotations:
         q, _ = np.linalg.qr(Dmat[:, 3:])
         q = np.hstack((Dmat[:, :3], q))
 
@@ -150,7 +155,7 @@ def project(job, atoms, ndof, hessian, verbose=False):
         print('INFO: ORTHOGONALIZED Dmat')
         for row in q:
             print("".join(['{0:15.8f}'.format(x) for x in row]))
-    
+
     I = np.eye(q.shape[0])
 
     qqp = np.dot(q, q.T)
@@ -182,11 +187,14 @@ def get_harmonic_vibrations(job, atoms, hessian):
     ndof = hessian.shape[0]
 
     # symmetrize the hessian
-    hessian = (hessian + hessian.T)*0.5e0 
+    hessian = (hessian + hessian.T) * 0.5e0
 
     if job['proj_translations'] | job['proj_rotations']:
 
-        hessian = project(job, atoms, ndof, hessian, verbose=False)
+        hessian = project(atoms, hessian, ndof,
+                          proj_translations=job['proj_translations'],
+                          proj_rotations=job['proj_rotations'],
+                          verbose=False)
 
     # create the mass vector, with the masses for each atom repeated 3 times
     masses = np.repeat(atoms.get_masses(), 3)
