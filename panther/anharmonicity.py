@@ -32,7 +32,7 @@ def get_vibdof(atoms, job, system):
     'Calculate the number of vibrational degrees of freedom'
 
     # get the total number of degrees of freedom
-    ndof = 3*(len(atoms) - len(atoms.constraints))
+    ndof = 3 * (len(atoms) - len(atoms.constraints))
 
     extradof = 0
     if system['phase'].lower() == 'gas':
@@ -188,17 +188,17 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
                 hamil = get_hamiltonian(rank, row.freq*invcm2au, row.mass, row.loc['a0':'a6'].values)
                 w, v = np.linalg.eig(hamil)
                 w = np.sort(w)
-                qvib = np.sum(np.exp(-w*au2joule/kT))
+                qvib = np.sum(np.exp(-w * au2joule / kT))
 
                 if niter == 0:
-                    deltaq = 2.0*qvib
+                    deltaq = 2.0 * qvib
 
                 anhfreq = (w[1] - w[0])/invcm2au
-                zpve = w[0]*au2joule*1.0e-3*Avogadro
-                U, S = get_anh_state_functions(w*au2joule, temp)
+                zpve = w[0] * au2joule * 1.0e-3 * Avogadro
+                U, S = get_anh_state_functions(w * au2joule, temp)
 
                 terminate = (np.abs(qvib - qvib_last) < QVIB_THRESH)\
-                            & (np.abs(w[0] - freq_last) < FREQ_THRESH)
+                             & (np.abs(w[0] - freq_last) < FREQ_THRESH)
 
                 if terminate:
                     if anhfreq < row.freq:
@@ -206,7 +206,7 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
                     else:
                         anh = (anhfreq, zpve, qvib, U, S, True, 'AGTH', rank, row.type.strip())
                 else:
-                    if w[0] > 0.0 and abs(qvib - qvib_last) < 1.5*deltaq:
+                    if w[0] > 0.0 and abs(qvib - qvib_last) < 1.5 * deltaq:
                         rank += 1
                         deltaq = abs(qvib - qvib_last)
                         qvib_last = qvib

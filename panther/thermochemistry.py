@@ -115,9 +115,9 @@ class Thermochemistry(object):
 
             sigma = self.system['symmetrynumber']
             if self.system['pointgroup'] in ['Coov', 'Dooh']:
-    	        return 2.0*np.max(I)*Boltzmann*T/(sigma*hbar**2)
+                return 2.0*np.max(I)*Boltzmann*T/(sigma*hbar**2)
             else:
-    	        return np.sqrt(pi*np.product(I)*np.power(2.0*Boltzmann*T/hbar**2, 3))/sigma
+                return np.sqrt(pi*np.product(I)*np.power(2.0*Boltzmann*T/hbar**2, 3))/sigma
         else:
             return 0.0
 
@@ -139,10 +139,10 @@ class Thermochemistry(object):
 
         if self.system['phase'] == 'gas':
 
-    	    vol = gas_constant*T/(self.conditions['pressure']*1.0e6)
-    	    totmass = get_total_mass(self.atoms)
+            vol = gas_constant*T/(self.conditions['pressure']*1.0e6)
+            totmass = get_total_mass(self.atoms)
 
-    	    return vol*np.power(2.0*pi*totmass*Boltzmann*T/Planck**2, 1.5)/Avogadro
+            return vol*np.power(2.0*pi*totmass*Boltzmann*T/Planck**2, 1.5)/Avogadro
         else:
             return 0.0
 
@@ -156,7 +156,7 @@ class Thermochemistry(object):
         '''
 
         if self.system['phase'] == 'gas':
-            return 1.5*gas_constant*T*1.0e-3
+            return 1.5 * gas_constant * T * 1.0e-3
         else:
             return 0.0
 
@@ -171,7 +171,7 @@ class Thermochemistry(object):
 
         if self.system['phase'] == 'gas':
             qtrans = self.get_qtranslational(T)
-            return  gas_constant*(np.log(qtrans) + 2.5)*1.0e-3
+            return gas_constant * (np.log(qtrans) + 2.5) * 1.0e-3
         else:
             return 0.0
 
@@ -186,9 +186,9 @@ class Thermochemistry(object):
 
         if self.system['phase'] == 'gas':
             if self.system['pointgroup'] in ['Coov', 'Dooh']:
-                energy_rot = gas_constant*T*1.0e-3
+                energy_rot = gas_constant * T * 1.0e-3
             else:
-                energy_rot = 1.5*gas_constant*T*1.0e-3
+                energy_rot = 1.5 * gas_constant * T * 1.0e-3
         else:
             energy_rot = 0.0
 
@@ -206,9 +206,9 @@ class Thermochemistry(object):
         if self.system['phase'] == 'gas':
             qrot = self.get_qrotational(T)
             if self.system['pointgroup'] in ['Coov', 'Dooh']:
-                entropy_rot = gas_constant*(np.log(qrot) + 1)*1.0e-3
+                entropy_rot = gas_constant * (np.log(qrot) + 1) * 1.0e-3
             else:
-                entropy_rot = gas_constant*(np.log(qrot) + 1.5)*1.0e-3
+                entropy_rot = gas_constant * (np.log(qrot) + 1.5) * 1.0e-3
         else:
             entropy_rot = 0.0
 
