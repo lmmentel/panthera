@@ -56,7 +56,7 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
     coords = pos.ravel() * ang2bohr
 
     # write equilibrium POSCAR
-    #ase.io.write('POSCAR.eq', atoms, vasp5=True)
+    # ase.io.write('POSCAR.eq', atoms, vasp5=True)
 
     # internals is a numpy record array with 'type' and 'value' records
     # bmatrix is a numpy array n_int x n_cart
@@ -93,25 +93,22 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
 
     Dmatrix = np.dot(Bmatrix, mwevecs)
 
-    eff_mass = 1.0 / np.diagonal(np.dot(mwevecs.T, mwevecs))
+    eff_mass = 1.0 / np.einsum('ij,ji->i', mwevecs.T, mwevecs)
 
-    vibpop = vib_population(hessian, evals, Bmatrix_inv, Dmatrix, internals, vibdof)
+    vibpop = vib_population(hessian, evals, Bmatrix_inv, Dmatrix, internals,
+                            vibdof)
     is_stretch = vibpop['R'] > 0.9
-    
-    return internals, Bmatrix
-    #displ = np.zeros(len(internals), dtype=float)
-    #displ[is_stretch] = 8.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[is_stretch])))
-    #displ[~is_stretch] = 4.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[~is_stretch])))
-    #displ = displ / (npoints * 2.0)
 
-    displ = np.zeros(len(internals), dtype=float)
+    return internals, Bmatrix
+
+    nint = len(internals)
+
+    displ = np.zeros(nint, dtype=float)
     displ[is_stretch] = 8.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[is_stretch])))
     displ[~is_stretch] = 4.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[~is_stretch])))
     displ = displ / (npoints * 2.0)
 
     for mode in range(mode_min, mode_max):
-
-        # eff_mass = 1.0 / np.dot(mwevecs[:, mode], mwevecs[:, mode])
 
         nu = np.sqrt(np.abs(evals[mode])) / invcm2au
         if nu < THR and nu > 0.0:
