@@ -11,21 +11,22 @@ import io
 
 from collections import defaultdict
 
-if sys.version_info.major == 3:
-    import configparser as cp
-else:
-    import ConfigParser as cp
-
 import numpy as np
 import pandas as pd
 
 from ase.io.vasp import read_vasp
 from ase.io.trajectory import Trajectory
 
+if sys.version_info.major == 3:
+    import configparser as cp
+else:
+    import ConfigParser as cp
+
+
 def parse_arguments():
     '''
-    Parse the input/config file name from the command line, parse the config and return the
-    parameters.
+    Parse the input/config file name from the command line, parse the config
+    and return the parameters.
     '''
 
     parser = argparse.ArgumentParser()
@@ -76,6 +77,7 @@ def parse_arguments():
 
     return args, conditions, job, system
 
+
 def get_symmetry_number(pointgroup):
     '''
     Return the symmetry number for a given point group
@@ -89,8 +91,8 @@ def get_symmetry_number(pointgroup):
             Symbol of the point group
     '''
 
-    symmetrynumbers = {'Ci' :  1, 'Cs' :  1, 'Coov' :  1, 'Dooh' : 2,
-                       'T'  : 12, 'Td' : 12, 'Oh'   : 24, 'Ih'   : 60}
+    symmetrynumbers = {'Ci':  1, 'Cs':  1, 'Coov':  1, 'Dooh': 2,
+                       'T' : 12, 'Td': 12, 'Oh'  : 24, 'Ih'  : 60}
 
     cpatt = re.compile(r'C(\d+)[vh]?')
     dpatt = re.compile(r'D(\d+)[dh]?')
@@ -106,14 +108,15 @@ def get_symmetry_number(pointgroup):
         if mc:
             return int(mc.group(1))
         elif md:
-            return 2*int(md.group(1))
+            return 2 * int(md.group(1))
         elif ms:
-            return int(ms.group(1))//2
+            return int(ms.group(1)) // 2
         else:
-            raise ValueError('Point group label "{}" unknown, cannot assign a rotational symmetry '
-                             'number'.format(pointgroup))
+            raise ValueError('Point group label "{}" unknown, cannot assign '
+                             'a rotational symmetry number'.format(pointgroup))
 
-def read_vasp_hessian(outcar='OUTCAR'):
+
+def read_vasp_hessian(outcar='OUTCAR', symmetrize=True):
     '''
     Parse the hessian from the VASP ``OUTCAR`` file into a numpy array
     '''
@@ -133,12 +136,16 @@ def read_vasp_hessian(outcar='OUTCAR'):
 
             hessian = np.zeros((dof, dof), dtype=float)
 
-            for i, row in enumerate(lines[n + 3 : n + 3 + dof]):
+            for i, row in enumerate(lines[n + 3: n + 3 + dof]):
                 hessian[i] = [float(x) for x in row.split()[1:]]
+
+            if symmetrize:
+                hessian = (hessian + hessian.T) * 0.5
 
             return hessian
     else:
         raise ValueError('No hessian found in file: {}'.format(outcar))
+
 
 def read_em_freq(fname):
     '''
@@ -175,8 +182,8 @@ def write_internal(atoms, hessian, job):
 
         fout.write('start atoms\n')
         for atom in atoms:
-            fout.write('{0:2s} {1:15.5f} {2:15.5f} {3:15.5f} T T T\n'.format(atom.symbol,
-                                                                            *tuple(atom.position)))
+            fout.write('{0:2s} {1:15.5f} {2:15.5f} {3:15.5f} T T T\n'.format(
+                atom.symbol, *tuple(atom.position)))
         fout.write('end atoms\n')
 
         fout.write('start energy\n')
@@ -196,19 +203,23 @@ def write_internal(atoms, hessian, job):
             fout.write(' '.join(['{0:15.8f}'.format(x) for x in row]) + '\n')
         fout.write('end hessian matrix\n')
 
-    print('wrote file: "{}" with the data in internal format'.format(job['internal_fname']))
+    print('wrote file: "{}" with the data in internal format'.format(
+        job['internal_fname']))
 
 
 def print_mode_info(df):
-    'After calculating all the anharmonic modes print the per mode themochemical functions'
+    '''
+    After calculating all the anharmonic modes print the per mode themochemical
+    functions
+    '''
 
     fmts = {
-        'freq' : '{:12.6f}'.format,
-        'zpve' : '{:12.6f}'.format,
-        'qvib' : '{:14.6e}'.format,
-        'U'    : '{:12.6f}'.format,
-        'S'    : '{:14.6e}'.format,
-        }
+        'freq': '{:12.6f}'.format,
+        'zpve': '{:12.6f}'.format,
+        'qvib': '{:14.6e}'.format,
+        'U'   : '{:12.6f}'.format,
+        'S'   : '{:14.6e}'.format,
+    }
 
     # header with the units
     header = '     {0:>12s} {1:>12s} {2:>14s} {3:>12s} {4:>14s}'
@@ -217,11 +228,12 @@ def print_mode_info(df):
     print(df.to_string(formatters=fmts))
 
     print('INFO codes')
-    print('-'*10)
+    print('-' * 10)
     print('OK      : Succesfully converged the anharmonic eigenproblem')
     print('AGTH    : Anharmonic frequency greater than the harmonic')
     print('CE      : Convergence Error')
     print('MAXITER : Maximum number of iterations exhausted')
+
 
 def write_modes(filename='POSCARs'):
     '''
@@ -251,10 +263,11 @@ def write_modes(filename='POSCARs'):
             traj.write(atoms)
         traj.close()
 
+
 def write_modes_cli():
     '''
-    Parse the filename with multiple POSCARS form command line and write trajectory files
-    with vibrational modes
+    Parse the filename with multiple POSCARS form command line and write
+    trajectory files with vibrational modes
     '''
 
     parser = argparse.ArgumentParser()
