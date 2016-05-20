@@ -1,10 +1,11 @@
 
 from __future__ import print_function, division
 
-from scipy.constants import hbar, angstrom, value, elementary_charge, value, pi, speed_of_light
+from scipy.constants import elementary_charge, value, pi, speed_of_light
 import numpy as np
 
 from .thermochemistry import constraints2mask
+
 
 def get_levicivita():
     'Get the Levi_civita symemtric tensor'
@@ -15,8 +16,13 @@ def get_levicivita():
 
     return eijk
 
+
 def project_massweighted(args, atoms, ndof, hessian, verbose=False):
-    
+    '''
+    Project translational and or rotatioanl dgrees of freedom from
+    mass weighted hessian
+    '''
+
     Dmat = np.zeros((ndof, 6), dtype=float)
 
     # part of the translation projection, see equation 4.10b in Miller, W.
@@ -38,7 +44,7 @@ def project_massweighted(args, atoms, ndof, hessian, verbose=False):
 
 
     #DRmat = np.zeros((ndof, 3), dtype=float)
-    
+
     # from Gaussian
     #Pmat = np.dot(xyzcom, Ivec.T)
 
@@ -71,11 +77,12 @@ def project_massweighted(args, atoms, ndof, hessian, verbose=False):
     #print('Final Dmat: \n', Dmat)
     #proj_hessian = np.dot(Dmat.T, np.dot(mwhessian, Dmat))
 
+
 def project(atoms, hessian, ndof, proj_translations=True,
             proj_rotations=False, verbose=False):
     '''
-    Calculate the hessian with translational and rotational degrees of freedom
-    projected out.
+    Project out the translational and/or rotational degrees of freedom
+    from the hessian.
 
     Args:
         atoms : ase.Atoms
@@ -163,17 +170,19 @@ def project(atoms, hessian, ndof, proj_translations=True,
     # project the force constant matrix (1 - P)*H*(1 - P)
     return np.dot(I - qqp, np.dot(hessian, I - qqp))
 
+
 def get_harmonic_vibrations(job, atoms, hessian):
     '''
-    Given a force constant matrix (hessian) decide whether or not to project the translational and
-    rotational degrees of freedom based on ``proj_translations`` and ``proj_rotations`` argsuments
-    in ``job`` respectively.
+    Given a force constant matrix (hessian) decide whether or not to project
+    the translational and rotational degrees of freedom based on
+    ``proj_translations`` and ``proj_rotations`` argsuments in ``job``
+    respectively.
 
     Args:
         atoms : Atoms
             ASE atoms object
         hessian : np.array
-            Force constant (Hessian) matrix, should be square
+            Force constant (Hessian) matrix, should be square and symmetrized
         job : dict
             Dictionary with the arguments parsed from the input/config
     '''
@@ -181,8 +190,8 @@ def get_harmonic_vibrations(job, atoms, hessian):
     # threshold for keeping the small eigenvalues of the hamiltonian
     THRESH = 1.0e-10
     # conversion fator from eV/A^2 to cm^-1
-    vasp2invcm = 1.0e8*np.sqrt(elementary_charge)\
-                /(np.sqrt(value('atomic mass constant'))*2.0*pi*speed_of_light)
+    vasp2invcm = 1.0e8 * np.sqrt(elementary_charge)\
+                / (np.sqrt(value('atomic mass constant')) * 2.0 * pi * speed_of_light)
 
     ndof = hessian.shape[0]
 
@@ -200,7 +209,7 @@ def get_harmonic_vibrations(job, atoms, hessian):
     masses = np.repeat(atoms.get_masses(), 3)
 
     # calculate the mass weighted hessian
-    masssqrt = np.diag(np.sqrt(1.0/masses))
+    masssqrt = np.diag(np.sqrt(1.0 / masses))
     mwhessian = -np.dot(masssqrt, np.dot(hessian, masssqrt))
 
     # diagonalize the projected hessian to get the squared frequencies and normal modes
