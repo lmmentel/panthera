@@ -116,10 +116,29 @@ def get_symmetry_number(pointgroup):
                              'a rotational symmetry number'.format(pointgroup))
 
 
-def read_vasp_hessian(outcar='OUTCAR', symmetrize=True):
+def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2atomic=True):
     '''
     Parse the hessian from the VASP ``OUTCAR`` file into a numpy array
+
+    Args:
+        outcar : str
+            Name of the VASP output, default is ``OUTCAR``
+        symmetrize : bool
+            If ``True`` the hessian will be symmetrized
+        covert2atomic : bool
+            If ``True`` convert the hessian to atomic units, in the other
+            case hessian is returned in [eV/Angstrom**2]
+
+    .. note::
+       By default VASP prints negative hessian so the elements are
+       multiplied by -1 to restore the original hessian
+
     '''
+
+    from scipy.constants import angstrom, value
+
+    ang2bohr = angstrom / value('atomic unit of length')
+    ev2hartree = value('electron volt-hartree relationship')
 
     if os.path.exists(outcar):
         with open(outcar, 'r') as foutcar:
@@ -142,7 +161,10 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True):
             if symmetrize:
                 hessian = (hessian + hessian.T) * 0.5
 
-            return hessian
+            if convert2atomic:
+                hessian = hessian * ev2hartree / (ang2bohr**2)
+
+            return -1 * hessian
     else:
         raise ValueError('No hessian found in file: {}'.format(outcar))
 
@@ -273,7 +295,7 @@ def write_modes_cli():
     parser = argparse.ArgumentParser()
     parser.add_argument('filename',
                         default='POSCARs',
-                        help='name of the file with geometries, default="POSCARs"')
+                        help='name of the file with structures, default="POSCARs"')
     parser.add_argument('-d', '--dir',
                         default='modes',
                         help='directory to put the modes, default="modes"')
