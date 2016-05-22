@@ -129,6 +129,10 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2atomic=True):
             If ``True`` convert the hessian to atomic units, in the other
             case hessian is returned in [eV/Angstrom**2]
 
+    Returns:
+        hessian : numpy.array
+            Hessian matrix
+
     .. note::
        By default VASP prints negative hessian so the elements are
        multiplied by -1 to restore the original hessian
