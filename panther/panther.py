@@ -63,11 +63,22 @@ def main():
 
         if job['code'] == 'VASP':
             atoms = read_vasp_out('OUTCAR', index=0)
-            hessian = read_vasp_hessian('OUTCAR')
+            hessian = read_vasp_hessian('OUTCAR', symmetrize=True,
+                                        convert2atomic=True)
         else:
             raise NotImplementedError('Code {} is not supported yet.'.format(job['code']))
 
-        freqs = get_harmonic_vibrations(job, atoms, hessian)
+        freqs, normal_modes = get_harmonic_vibrations(hessian, atoms,
+                                                      job['proj_translations'],
+                                                      job['proj_rotations'])
+
+        freqs = 0.01 * value('hartree-inverse meter relationship') * freqs.astype(complex)**0.5
+
+        # save the result
+        print('INFO: Saving vibrational frequencies to: frequencies.npy')
+        np.save('frequencies', freqs)
+        print('INFO: Saving vibrational normal modes to: normal_modes.npy')
+        np.save('normal_modes', normal_modes)
 
         print('\n' + ' Vibrational frequencies in [cm^-1] '.center(50, '='), end='\n\n')
         print('        {0:^20s} {1:^20s}'.format('real', 'imag'))
@@ -75,7 +86,7 @@ def main():
             print('{0:5d} : '.format(i), '{0:20.10f} {1:20.10f}'.format(v.real, v.imag))
 
         # convert frequencies from [cm^-1] to [Hz] and get vib. energies in Joules
-        vibenergies = Planck * freqs.real * 100.0*value('inverse meter-hertz relationship')
+        vibenergies = Planck * freqs.real * 100.0 * value('inverse meter-hertz relationship')
         vibenergies = vibenergies[vibenergies > 0.0]
 
         thermo = HarmonicThermo(vibenergies, atoms, conditions, system)
