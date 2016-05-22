@@ -25,9 +25,9 @@ import sphinx_rtd_theme
 import inspect
 from sphinx import apidoc
 
-MOCK_MODULES = ['argparse', 'ase', 'ase.io.', 'ase.io.vasp', 'numpy', 'numpy.ma', 'numpy.linalg',
+MOCK_MODULES = ['argparse', 'ase', 'ase.io', 'ase.io.vasp', 'numpy', 'numpy.ma', 'numpy.linalg',
                 'matplotlib', 'matplotlib.pyplot', 'scipy', 'scipy.constants', 'scipy.optimize',
-                'scipy.linalg', 'pandas', 'seaborn', 'ase.io.trajectory']
+                'scipy.linalg', 'pandas', 'seaborn', 'ase.io.trajectory', 'writeBmat']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
