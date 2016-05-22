@@ -6,6 +6,10 @@ import numpy as np
 
 from .thermochemistry import constraints2mask
 
+# conversion fator from eV/A^2 to cm^-1
+vasp2invcm = 1.0e8 * np.sqrt(elementary_charge)\
+            / (np.sqrt(value('atomic mass constant')) * 2.0 * pi * speed_of_light)
+
 
 def get_levicivita():
     'Get the Levi_civita symemtric tensor'
@@ -171,7 +175,8 @@ def project(atoms, hessian, ndof, proj_translations=True,
     return np.dot(I - qqp, np.dot(hessian, I - qqp))
 
 
-def get_harmonic_vibrations(job, atoms, hessian):
+def get_harmonic_vibrations(hessian, atoms, proj_translations=True,
+                            proj_rotations=False):
     '''
     Given a force constant matrix (hessian) decide whether or not to project
     the translational and rotational degrees of freedom based on
@@ -179,52 +184,51 @@ def get_harmonic_vibrations(job, atoms, hessian):
     respectively.
 
     Args:
-        atoms : Atoms
-            ASE atoms object
         hessian : np.array
             Force constant (Hessian) matrix, should be square and symmetrized
-        job : dict
-            Dictionary with the arguments parsed from the input/config
+            and converted to atomic units
+        atoms : Atoms
+            ASE atoms object
+        proj_translations : bool
+            If ``True`` translational degrees of freedom will be projected from
+            the hessian
+        proj_rotations : bool
+            If ``True`` rotational degrees of freedom will be projected from
+            the hessian
+
+    Returns:
+        out : (w, v)
+            tuple of numpy arrays with hessian eigevalues and eiegenvectors in
+            atomic units
     '''
 
     # threshold for keeping the small eigenvalues of the hamiltonian
     THRESH = 1.0e-10
-    # conversion fator from eV/A^2 to cm^-1
-    vasp2invcm = 1.0e8 * np.sqrt(elementary_charge)\
-                / (np.sqrt(value('atomic mass constant')) * 2.0 * pi * speed_of_light)
 
     ndof = hessian.shape[0]
 
-    # symmetrize the hessian
-    hessian = (hessian + hessian.T) * 0.5e0
-
-    if job['proj_translations'] | job['proj_rotations']:
+    if proj_translations | proj_rotations:
 
         hessian = project(atoms, hessian, ndof,
-                          proj_translations=job['proj_translations'],
-                          proj_rotations=job['proj_rotations'],
+                          proj_translations=proj_translations,
+                          proj_rotations=proj_rotations,
                           verbose=False)
 
     # create the mass vector, with the masses for each atom repeated 3 times
-    masses = np.repeat(atoms.get_masses(), 3)
+    # and convert to atomic units
+    masses = np.repeat(atoms.get_masses(), 3) / value('electron mass in u')
 
     # calculate the mass weighted hessian
     masssqrt = np.diag(np.sqrt(1.0 / masses))
-    mwhessian = -np.dot(masssqrt, np.dot(hessian, masssqrt))
+    mwhessian = np.dot(masssqrt, np.dot(hessian, masssqrt))
 
-    # diagonalize the projected hessian to get the squared frequencies and normal modes
-    w, v = np.linalg.eigh(mwhessian)
+    # diagonalize the projected hessian to get the squared frequencies and
+    # normal modes
+    wals, vecs = np.linalg.eigh(mwhessian)
 
-    w[w < THRESH] = 0.0
+    wals[wals < THRESH] = 0.0
 
-    freq = vasp2invcm * w.astype(complex)**0.5
+    wals = wals[::-1]
+    vecs = vecs[:, ::-1]
 
-    # save the result
-    print('INFO: Saving vibrational frequencies to: frequencies.npy')
-    np.save('frequencies', freq)
-    print('INFO: Saving vibrational normal modes to: normal_modes.npy')
-    np.save('normal_modes', v)
-
-    freq = np.sort(freq)[::-1]
-
-    return freq
+    return wals, vecs
