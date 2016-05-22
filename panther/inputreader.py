@@ -116,7 +116,7 @@ def get_symmetry_number(pointgroup):
                              'a rotational symmetry number'.format(pointgroup))
 
 
-def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2atomic=True):
+def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2au=True):
     '''
     Parse the hessian from the VASP ``OUTCAR`` file into a numpy array
 
@@ -125,7 +125,7 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2atomic=True):
             Name of the VASP output, default is ``OUTCAR``
         symmetrize : bool
             If ``True`` the hessian will be symmetrized
-        covert2atomic : bool
+        covert2au : bool
             If ``True`` convert the hessian to atomic units, in the other
             case hessian is returned in [eV/Angstrom**2]
 
@@ -165,7 +165,7 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2atomic=True):
             if symmetrize:
                 hessian = (hessian + hessian.T) * 0.5
 
-            if convert2atomic:
+            if convert2au:
                 hessian = hessian * ev2hartree / (ang2bohr**2)
 
             return -1 * hessian
