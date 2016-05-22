@@ -1,30 +1,22 @@
 
 from __future__ import print_function, absolute_import, division
 
+import copy
 import numpy as np
 from scipy.constants import angstrom, pi, value
+from collections import OrderedDict
 
 from writeBmat import get_internals
 
-from .vibrations import project
+from .vibrations import get_harmonic_vibrations
 
-# TODO: this should generate a list/dict of Atoms objects
-#       having displaced coordiantes assigned to atoms, this
-#       will enable then to generate input files and run the
-#       jobs,
-#       the dict key might be a tuple of (mode, point)
-
-
-THR = 1.0e-6
-THRESH = 1.0e-14
-prm = 1.0 / value('electron mass in u')
-ang2bohr = angstrom / value('atomic unit of length')
-ev2hartree = value('electron volt-hartree relationship')
-invcm2au = 100.0 * value('inverse meter-hartree relationship')
+FREQ_THRESH = 1.0e6
+DISPNORM_THRESH = 1.0e-2
+CARTDISP_THRESH = 1.0e-6
 
 
 def calculate_displacements(atoms, hessian, npoints, mode_min=None,
-                            mode_max=None):
+                            mode_max=None, verbose=False):
     '''
     Calculate displacements in internal coordinates
 
@@ -40,7 +32,20 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
             Smallest mode number
         mode_max : int
             Largest mode number
+        verbose : bool
+            If ``True`` additional debug information is printed to stdout
+
+    Returns:
+        images : dict
+            A dictionary with the structures with tuples of (mode, point) as
+            keys, where point is a number from -4, -3, -2, -1, 1, 2, 3, 4
     '''
+
+    ang2bohr = angstrom / value('atomic unit of length')
+    prm = 1.0 / value('electron mass in u')
+    au2invcm = 0.01 * value('hartree-inverse meter relationship')
+
+    images = OrderedDict()
 
     natoms = atoms.get_number_of_atoms()
     ndof = 3 * natoms
@@ -55,88 +60,120 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
 
     coords = pos.ravel() * ang2bohr
 
-    # write equilibrium POSCAR
-    # ase.io.write('POSCAR.eq', atoms, vasp5=True)
-
     # internals is a numpy record array with 'type' and 'value' records
     # bmatrix is a numpy array n_int x n_cart
-    internals, Bmatrix = get_internals(atoms, sort=False, return_bmatrix=True)
+    internals, Bmatrix = get_internals(atoms, return_bmatrix=True)
+
+    mask = internals['value'] < 0.0
+    internals['value'][mask] = 2 * pi + internals['value'][mask]
 
     # matrix with square root of masses
-    B_mass_inv = np.zeros((ndof, ndof), dtype=float)
-    np.fill_diagonal(B_mass_inv, np.repeat(1.0 / np.sqrt(masses * prm), 3))
+    M_invsqrt = np.zeros((ndof, ndof), dtype=float)
+    np.fill_diagonal(M_invsqrt, np.repeat(1.0 / np.sqrt(masses * prm), 3))
 
     # matrix with inverse masses
     M_inv = np.zeros((ndof, ndof), dtype=float)
     np.fill_diagonal(M_inv, np.repeat(1.0 / (masses * prm), 3))
 
     Gmatrix = np.dot(Bmatrix, np.dot(M_inv, Bmatrix.T))
-
     Gmatrix_inv = np.linalg.pinv(Gmatrix)
 
     # calculate hessian eigenvalues and eigenvectors
-    prhessian = project(atoms, hessian, ndof, proj_translations=True,
-                        proj_rotations=True)
-    prmwhessian = np.dot(B_mass_inv, np.dot(prhessian, B_mass_inv))
-    evals, evecs = np.linalg.eigh(prmwhessian)
-
-    # sort eigenvalues and corresponding eiegenvectors in descending order
-    evals[evals < THRESH] = 0.0
+    evals, evecs = get_harmonic_vibrations(hessian, atoms,
+                                           proj_translations=True,
+                                           proj_rotations=True)
     vibdof = np.count_nonzero(evals)
 
-    evals = evals[::-1]
-    evecs = evecs[:, ::-1]
-
-    mwevecs = np.dot(B_mass_inv, evecs)
+    mwevecs = np.dot(M_invsqrt, evecs)
 
     Bmatrix_inv = np.dot(M_inv, np.dot(Bmatrix.T, Gmatrix_inv))
 
     Dmatrix = np.dot(Bmatrix, mwevecs)
 
     eff_mass = 1.0 / np.einsum('ij,ji->i', mwevecs.T, mwevecs)
+    np.save('effective_masses', eff_mass)
 
     vibpop = vib_population(hessian, evals, Bmatrix_inv, Dmatrix, internals,
                             vibdof)
     is_stretch = vibpop['R'] > 0.9
 
-    return internals, Bmatrix
-
-    nint = len(internals)
-
-    displ = np.zeros(nint, dtype=float)
+    # calculate the megnitude of the displacement for all the modes
+    displ = np.zeros(ndof, dtype=float)
     displ[is_stretch] = 8.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[is_stretch])))
     displ[~is_stretch] = 4.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[~is_stretch])))
     displ = displ / (npoints * 2.0)
 
     for mode in range(mode_min, mode_max):
+        nu = np.sqrt(np.abs(evals[mode])) * au2invcm
+        print(' mode : {0:d} nu : {1:.4f} '.format(mode, nu).center(80, '*'))
 
-        nu = np.sqrt(np.abs(evals[mode])) / invcm2au
-        if nu < THR and nu > 0.0:
+        if nu < FREQ_THRESH and nu > 0.0:
 
             for sign in [1, -1]:
+                for point in range(1, npoints + 1):
+                    print(' mode : {0:d} point : {1:d} '.format(mode, point * sign).center(80, '*'))
 
-                for point in range(npoints):
-                    print(' Point : {} '.format(point).center(80, '='))
+                    # equilibrium structure
+                    coords = pos.ravel().copy() * ang2bohr
 
-                    coords = pos.ravel() * ang2bohr
-
-                    internal_coord_disp = sign * Dmatrix[:, mode] * disp * point
-
+                    internal_coord_disp = sign * Dmatrix[:, mode] * displ[mode] * point
                     cart_coord_disp = np.dot(Bmatrix_inv, internal_coord_disp)
 
                     coords += cart_coord_disp
-
                     coords_init = coords.copy()
 
-                    iteration = 0
+                    iteration = 1
                     not_converged = True
                     while not_converged:
                         # update atoms with new coords
-                        internals_new = get_internals(atoms)
+                        newatoms = atoms.copy()
+                        newatoms.set_positions(coords.reshape(natoms, 3) / ang2bohr)
+                        internals_new, Bmatrix = get_internals(newatoms,
+                                                        return_bmatrix=True)
 
-                        delta_int = internal_coord_disp - (internals_new - internals)
+                        mask = internals_new['value'] < 0.0
+                        internals_new['value'][mask] = 2 * pi + internals_new['value'][mask]
+
+                        if verbose:
+                            print('internals'.center(80, '-'))
+                            for row in internals_new:
+                                print('{0:5s} {1:20.10f}'.format(row['type'], row['value']))
+
+                        delta_int = internal_coord_disp - (internals_new['value'] - internals['value'])
 
                         disp_norm = np.sqrt(np.dot(delta_int, delta_int))
+                        print('disp_norm: ', disp_norm)
+
+                        if iteration == 1:
+                            disp_norm_init = copy.copy(disp_norm)
+                        elif iteration > 1:
+                            if disp_norm - disp_norm_init > DISPNORM_THRESH:
+                                print('### Back iteration not convergerd after', iteration, 'iterations')
+                                print('### disp_norm - disp_norm_init: ', disp_norm - disp_norm_init)
+                                coords = coords_init.copy()
+                                break
+
+                        for internal_type in ['A', 'T']:
+                            mask = np.logical_and(internals['type'] == internal_type, delta_int > pi)
+                            delta_int[mask] = 2 * pi - np.abs(delta_int[mask])
+
+                        cart_coord_disp = np.dot(Bmatrix_inv, delta_int)
+
+                        coords += cart_coord_disp
+
+                        if np.max(np.abs(cart_coord_disp)) < CARTDISP_THRESH:
+                            print('### convergence achieved after ', iteration, ' iterations')
+                            break
+                        elif iteration > 25:
+                            print('### convergence NOT achieved after ', iteration, ' iterations')
+                            break
+                        else:
+                            iteration += 1
+
+                    newatoms.set_positions(coords.reshape(natoms, 3) / ang2bohr)
+                    images[tuple([mode, sign * point])] = newatoms
+
+    return images
 
 
 def vib_population(hessian, h_evals, Bmatrix_inv, Dmatrix, internals, vibdof,
@@ -206,13 +243,16 @@ def print_vib_pop(vibpop, evals, vibdof, output='vib_pop.log'):
             used
     '''
 
+    au2invcm = 0.01 * value('hartree-inverse meter relationship')
+
     if output is not None:
         fobj = open(output, 'w')
 
-    print('{0:^5s} {1:^10s} {2:^8s} {3:^8s} {4:^8s}'.format('mode', 'omega', 'stretch', 'bend', 'torsion'), file=fobj)
+    print('{0:^5s} {1:^10s} {2:^8s} {3:^8s} {4:^8s}'.format('mode', 'omega',
+        'stretch', 'bend', 'torsion'), file=fobj)
     for mode, row in enumerate(vibpop[:vibdof]):
         print('{0:5d} {1:>10.4f} {2:>8.2%} {3:>8.2%} {4:>8.2%}'.format(
-            mode + 1, np.sqrt(evals[mode]) / invcm2au, row['R'], row['A'],
+            mode + 1, np.sqrt(evals[mode]) * au2invcm, row['R'], row['A'],
             row['T']), file=fobj)
 
     if output is not None:

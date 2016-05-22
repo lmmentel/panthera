@@ -7,8 +7,8 @@ import numpy as np
 from .thermochemistry import constraints2mask
 
 # conversion fator from eV/A^2 to cm^-1
-vasp2invcm = 1.0e8 * np.sqrt(elementary_charge)\
-            / (np.sqrt(value('atomic mass constant')) * 2.0 * pi * speed_of_light)
+#vasp2invcm = 1.0e8 * np.sqrt(elementary_charge)\
+#            / (np.sqrt(value('atomic mass constant')) * 2.0 * pi * speed_of_light)
 
 
 def get_levicivita():
