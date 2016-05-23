@@ -105,13 +105,15 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
 
     for mode in range(mode_min, mode_max):
         nu = np.sqrt(np.abs(evals[mode])) * au2invcm
-        print(' mode : {0:d} nu : {1:.4f} '.format(mode, nu).center(80, '*'))
-
         if nu < FREQ_THRESH and nu > 0.0:
 
             for sign in [1, -1]:
                 for point in range(1, npoints + 1):
-                    print(' mode : {0:d} point : {1:d} '.format(mode, point * sign).center(80, '*'))
+                    if verbose:
+                        line = ' mode : {0:d} '.format(mode) +\
+                               ' nu : {1:.4f} '.format(nu) +\
+                               ' point : {1:d} '.format(point * sign)
+                        print(line.center(80, '*'))
 
                     # equilibrium structure
                     coords = pos.ravel().copy() * ang2bohr
