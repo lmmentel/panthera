@@ -67,7 +67,7 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
     mask = internals['value'] < 0.0
     internals['value'][mask] = 2 * pi + internals['value'][mask]
 
-    # matrix with square root of masses
+    # matrix with inverse square roots of masses on diagonal
     M_invsqrt = np.zeros((ndof, ndof), dtype=float)
     np.fill_diagonal(M_invsqrt, np.repeat(1.0 / np.sqrt(masses * prm), 3))
 

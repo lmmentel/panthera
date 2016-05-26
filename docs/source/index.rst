@@ -14,6 +14,7 @@ Contents:
    Installation <install>
    User guide <userguide>
    API Reference <_reference/modules>
+   ic_displacements
 
 Indices and tables
 ==================

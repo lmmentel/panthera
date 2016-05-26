@@ -9,7 +9,11 @@ Dependencies
     - `pandas <http://pandas.pydata.org/>`_
     - `matplotlib <http://matplotlib.org/>`_
     - `seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_
-    - `future <https://pypi.python.org/pypi/future>`_ 
+    - `future <https://pypi.python.org/pypi/future>`_
+
+The :py:mod:`displacements <panther.displacements>` module uses :py:func:`get_internals` function that
+from the ``writeBmat`` package that is adapted from the GADGET suite [1]_ and is not
+distrubuted as a part o this package.
 
 
 The recommended installation method is with pip_. The latest version
@@ -33,3 +37,7 @@ and installed via
 
 .. _bitbucket repository: https://bitbucket.org/lukaszmentel/panther
 .. _pip: https://pip.pypa.io/en/stable/
+
+.. [1] Bučko, T., Hafner, J., & Ángyán, J. G. (2005). Geometry optimization of
+   periodic systems using internal coordinates. The Journal of Chemical Physics,
+   122(12), 124508. doi:10.1063/1.1864932
