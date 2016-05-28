@@ -102,6 +102,7 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
     displ[is_stretch] = 8.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[is_stretch])))
     displ[~is_stretch] = 4.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[~is_stretch])))
     displ = displ / (npoints * 2.0)
+    np.save('displacements', displ)
 
     for mode in range(mode_min, mode_max):
         nu = np.sqrt(np.abs(evals[mode])) * au2invcm
@@ -144,7 +145,6 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
                         delta_int = internal_coord_disp - (internals_new['value'] - internals['value'])
 
                         disp_norm = np.sqrt(np.dot(delta_int, delta_int))
-                        print('disp_norm: ', disp_norm)
 
                         if iteration == 1:
                             disp_norm_init = copy.copy(disp_norm)
