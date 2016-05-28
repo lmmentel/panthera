@@ -45,8 +45,6 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
     prm = 1.0 / value('electron mass in u')
     au2invcm = 0.01 * value('hartree-inverse meter relationship')
 
-    images = OrderedDict()
-
     natoms = atoms.get_number_of_atoms()
     ndof = 3 * natoms
     masses = atoms.get_masses()
@@ -102,10 +100,14 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
     displ[is_stretch] = 8.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[is_stretch])))
     displ[~is_stretch] = 4.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[~is_stretch])))
     displ = displ / (npoints * 2.0)
-    np.save('displacements', displ)
+    np.save('unit_displacements', displ)
+
+    images = OrderedDict()
 
     for mode in range(mode_min, mode_max):
         nu = np.sqrt(np.abs(evals[mode])) * au2invcm
+        images[mode] = OrderedDict()
+
         if nu < FREQ_THRESH and nu > 0.0:
 
             for sign in [1, -1]:
@@ -173,7 +175,7 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
                             iteration += 1
 
                     newatoms.set_positions(coords.reshape(natoms, 3) / ang2bohr)
-                    images[tuple([mode, sign * point])] = newatoms
+                    images[mode][sign * point] = newatoms
 
     return images
 
