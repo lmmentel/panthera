@@ -1,8 +1,10 @@
 
 from __future__ import print_function, absolute_import, division
 
+import pickle
 import copy
 import numpy as np
+import pandas as pd
 from scipy.constants import angstrom, pi, value
 from collections import OrderedDict
 
@@ -39,6 +41,9 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
         images : dict
             A dictionary with the structures with tuples of (mode, point) as
             keys, where point is a number from -4, -3, -2, -1, 1, 2, 3, 4
+        mi : pandas.DataFrame
+            DataFrame with per mode characteristics, displacements, masses
+            and a flag to mark it a mode is a stretching mode or not
     '''
 
     ang2bohr = angstrom / value('atomic unit of length')
@@ -88,19 +93,23 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
 
     Dmatrix = np.dot(Bmatrix, mwevecs)
 
-    eff_mass = 1.0 / np.einsum('ij,ji->i', mwevecs.T, mwevecs)
-    np.save('effective_masses', eff_mass)
-
     vibpop = vib_population(hessian, evals, Bmatrix_inv, Dmatrix, internals,
                             vibdof)
-    is_stretch = vibpop['R'] > 0.9
+
+    # DataFrame with mode data
+    mi = pd.DataFrame(index=pd.Index(data=range(ndof), name='mode'),
+                      columns=['effective_mass', 'displacement', 'is_stretch'])
+
+    mi['is_stretch'] = vibpop['R'] > 0.9
+    mi['effective_mass'] = 1.0 / np.einsum('ij,ji->i', mwevecs.T, mwevecs)
 
     # calculate the megnitude of the displacement for all the modes
-    displ = np.zeros(ndof, dtype=float)
-    displ[is_stretch] = 8.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[is_stretch])))
-    displ[~is_stretch] = 4.0 / np.sqrt(2.0 * pi * np.sqrt(np.abs(evals[~is_stretch])))
-    displ = displ / (npoints * 2.0)
-    np.save('unit_displacements', displ)
+    mi.loc[mi['is_stretch'], 'displacement'] = 8.0 / np.sqrt(2.0 * pi *
+                        np.sqrt(np.abs(evals[mi['is_stretch'].values])))
+    mi.loc[~mi['is_stretch'], 'displacement'] = 4.0 / np.sqrt(2.0 * pi *
+                        np.sqrt(np.abs(evals[~mi['is_stretch'].values])))
+    mi['displacement'] = mi['displacement'] / (npoints * 2.0)
+    mi.to_pickle('modeinfo.pkl')
 
     images = OrderedDict()
 
@@ -121,7 +130,8 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
                     # equilibrium structure
                     coords = pos.ravel().copy() * ang2bohr
 
-                    internal_coord_disp = sign * Dmatrix[:, mode] * displ[mode] * point
+                    internal_coord_disp = sign * Dmatrix[:, mode] * mi.loc[mode, 'displacement'] * point
+
                     cart_coord_disp = np.dot(Bmatrix_inv, internal_coord_disp)
 
                     coords += cart_coord_disp
@@ -177,7 +187,10 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
                     newatoms.set_positions(coords.reshape(natoms, 3) / ang2bohr)
                     images[mode][sign * point] = newatoms
 
-    return images
+    with open('images.pkl', 'w') as fpkl:
+        pickle.dump(images, fpkl)
+
+    return images, mi
 
 
 def vib_population(hessian, h_evals, Bmatrix_inv, Dmatrix, internals, vibdof,
