@@ -197,6 +197,26 @@ def read_em_freq(fname):
     return data
 
 
+def read_pes(fname):
+    '''
+    Parse the file with the potential energy surface (PES) into a dict of
+    numpy arrays with mode numbers as keys
+
+    Args:
+        fname : str
+            Name of the file with PES
+    '''
+
+    with open(fname, 'r') as fobj:
+        data = fobj.read()
+
+    pat = re.compile(' Scan along mode # =\s*(\d+)')
+    parsed = [x for x in pat.split(data) if x != '']
+    it = iter(parsed)
+    parsed = {int(mode): np.loadtxt(io.StringIO(pes)) for mode, pes in zip(it, it)}
+    return parsed
+
+
 def write_internal(atoms, hessian, job):
     '''
     Write a file with the system details
