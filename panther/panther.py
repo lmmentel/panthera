@@ -55,7 +55,8 @@ def main():
 
     if args.command == 'convert':
         atoms = read_vasp_out('OUTCAR', index=0)
-        hessian = read_vasp_hessian('OUTCAR')
+        hessian = read_vasp_hessian('OUTCAR', symmetrize=False, convert2au=False,
+                                    negative=False)
 
         write_internal(atoms, hessian, job)
 
@@ -64,7 +65,7 @@ def main():
         if job['code'] == 'VASP':
             atoms = read_vasp_out('OUTCAR', index=0)
             hessian = read_vasp_hessian('OUTCAR', symmetrize=True,
-                                        convert2atomic=True)
+                                        convert2au=True, negative=True)
         else:
             raise NotImplementedError('Code {} is not supported yet.'.format(job['code']))
 
