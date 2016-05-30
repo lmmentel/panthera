@@ -14,7 +14,7 @@ Contents:
    Installation <install>
    User guide <userguide>
    Tutorials <tutorials>
-   API Reference <_reference/modules>
+   API <api>
 
 Indices and tables
 ==================

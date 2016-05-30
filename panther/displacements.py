@@ -22,28 +22,30 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
     '''
     Calculate displacements in internal coordinates
 
-    Args:
-        atoms : ase.Atoms
-            Atoms object
-        hessian : numpy.array
-            Symmetric hessian matrix in atomic units [hartree/bohr**2]
-        npoints : int
-            Number of points to displace structure, the code will calculate
-            ``2*npoints`` displacements since + and - directions are taken
-        mode_min : int
-            Smallest mode number
-        mode_max : int
-            Largest mode number
-        verbose : bool
-            If ``True`` additional debug information is printed to stdout
+    Parameters
+    ----------
+    atoms : ase.Atoms
+        Atoms object
+    hessian : array_like
+        Symmetric hessian matrix in atomic units [hartree/bohr**2]
+    npoints : int
+        Number of points to displace structure, the code will calculate
+        ``2*npoints`` displacements since + and - directions are taken
+    mode_min : int
+        Smallest mode number
+    mode_max : int
+        Largest mode number
+    verbose : bool
+        If ``True`` additional debug information is printed to stdout
 
-    Returns:
-        images : dict
-            A dictionary with the structures with tuples of (mode, point) as
-            keys, where point is a number from -4, -3, -2, -1, 1, 2, 3, 4
-        mi : pandas.DataFrame
-            DataFrame with per mode characteristics, displacements, masses
-            and a flag to mark it a mode is a stretching mode or not
+    Returns
+    -------
+    images : dict
+        A dictionary with the structures with tuples of (mode, point) as
+        keys, where point is a number from -4, -3, -2, -1, 1, 2, 3, 4
+    mi : pandas.DataFrame
+        DataFrame with per mode characteristics, displacements, masses
+        and a flag to mark it a mode is a stretching mode or not
     '''
 
     ang2bohr = angstrom / value('atomic unit of length')
@@ -130,7 +132,8 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
                     # equilibrium structure
                     coords = pos.ravel().copy() * ang2bohr
 
-                    internal_coord_disp = sign * Dmatrix[:, mode] * mi.loc[mode, 'displacement'] * point
+                    internal_coord_disp = sign * Dmatrix[:, mode] *\
+                                          mi.loc[mode, 'displacement'] * point
 
                     cart_coord_disp = np.dot(Bmatrix_inv, internal_coord_disp)
 
@@ -198,20 +201,22 @@ def vib_population(hessian, h_evals, Bmatrix_inv, Dmatrix, internals, vibdof,
     '''
     Calculate the vibrational population analysis
 
-    Args:
-        hessian : numpy.array
-            Hessian matrix
-        h_evals : numpy.array
-            A vector of hessian eigenvalues
-        vibdof : int
-            Number of vibrational degrees of freedom
-        output : str
-            Name of the file to store the results
+    Parameters
+    ----------
+    hessian : array_like
+        Hessian matrix
+    h_evals : array_like
+        A vector of hessian eigenvalues
+    vibdof : int
+        Number of vibrational degrees of freedom
+    output : str
+        Name of the file to store the results
 
-    Returns:
-        vibpop : numpy array
-            Numpy structured array with the vibrational populations for
-            stretches, bends, and torsions, per mode
+    Returns
+    -------
+    vibpop : numpy array
+        Numpy structured array with the vibrational populations for
+        stretches, bends, and torsions, per mode
     '''
 
     nint, ndof = Dmatrix.shape
@@ -247,17 +252,18 @@ def print_vib_pop(vibpop, evals, vibdof, output='vib_pop.log'):
     '''
     Print the vibrational population data
 
-    Args:
-        vibpop : numpy.recarray
-            Numpy structured array with the vibrational populations for
-            stretches, bends, and torsions, per mode
-        h_evals : numpy.array
-            A vector of hessian eigenvalues
-        vibdof : int
-            Number of vibrational degrees of freedom
-        output : str
-            Name of the file to store the printout, if ``None`` stdout will be
-            used
+    Parameters
+    ----------
+    vibpop : numpy.recarray
+        Numpy structured array with the vibrational populations for
+        stretches, bends, and torsions, per mode
+    h_evals : array_like
+        A vector of hessian eigenvalues
+    vibdof : int
+        Number of vibrational degrees of freedom
+    output : str
+        Name of the file to store the printout, if ``None`` stdout will be
+        used
     '''
 
     au2invcm = 0.01 * value('hartree-inverse meter relationship')
@@ -266,7 +272,7 @@ def print_vib_pop(vibpop, evals, vibdof, output='vib_pop.log'):
         fobj = open(output, 'w')
 
     print('{0:^5s} {1:^10s} {2:^8s} {3:^8s} {4:^8s}'.format('mode', 'omega',
-        'stretch', 'bend', 'torsion'), file=fobj)
+            'stretch', 'bend', 'torsion'), file=fobj)
     for mode, row in enumerate(vibpop[:vibdof]):
         print('{0:5d} {1:>10.4f} {2:>8.2%} {3:>8.2%} {4:>8.2%}'.format(
             mode + 1, np.sqrt(evals[mode]) * au2invcm, row['R'], row['A'],

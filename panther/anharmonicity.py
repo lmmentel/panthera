@@ -11,22 +11,29 @@ from scipy.constants import value, Boltzmann, Avogadro, Planck, gas_constant
 
 from .inputreader import read_em_freq, print_mode_info
 
+
 def factsqrt(m, n):
     '''
     Return a factorial like constant
+
+    Parameters
+    ----------
+    m : int
+        Argument of the series
+    n : int
+        Length of the series
+
+    Notes
+    -----
 
     .. math::
 
         f(m, n) = \prod^{n - 1}_{i = 0} \sqrt{m - i}
 
-    Args:
-        m : int
-            Argument of the series
-        n : int
-            Length of the series
     '''
 
     return np.sqrt(np.prod([m - i for i in range(n)]))
+
 
 def get_vibdof(atoms, job, system):
     'Calculate the number of vibrational degrees of freedom'
@@ -49,10 +56,25 @@ def get_vibdof(atoms, job, system):
 
     return ndof - extradof
 
+
 def get_hamiltonian(rank, freq, mass, coeffs):
     '''
-    Compose the Hamiltonian matrix for the anharmonic oscillator with the potential described by
-    the sixth order polynomial.
+    Compose the Hamiltonian matrix for the anharmonic oscillator with the
+    potential described by the sixth order polynomial.
+
+    Parameters
+    ----------
+    rank : int
+        Rank of the Hamiltonian matrix
+    freq : float
+        Fundamental frequency in hartrees
+    mass : float
+        Reduced mass of the mode
+    coeffs : array
+        A one dimensional array with polynomial coeffients
+
+    Notes
+    -----
 
     .. math::
 
@@ -67,15 +89,6 @@ def get_hamiltonian(rank, freq, mass, coeffs):
 
     and :math:`\Psi_{i}` are the standard harmonic oscillator functions.
 
-    Args:
-        rank : int
-            Rank of the Hamiltonian matrix
-        freq : float
-            Fundamental frequency in hartrees
-        mass : float
-            Reduced mass of the mode
-        coeffss : array
-            A one dimensional array with polynomial coeffients
     '''
 
     Hamil = np.zeros((rank, rank), dtype=float)
@@ -135,22 +148,24 @@ def get_hamiltonian(rank, freq, mass, coeffs):
 
     return Hamil
 
+
 def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     '''
     Calculate the anharmonic frequencies
 
-    Args:
-        atoms : ase.Atoms
-            Atoms object
-        temp : float
-            Temperature in `K`
-        job : dict
-            Dictionary with the job specicification
-        system : dict
-            Dicitonary with the system specification
-        fname : str
-            Name of the file with frequencies and fitted coefficients, should
-            have 10 columns per mode
+    Parameters
+    ----------
+    atoms : ase.Atoms
+        Atoms object
+    temp : float
+        Temperature in `K`
+    job : dict
+        Dictionary with the job specicification
+    system : dict
+        Dicitonary with the system specification
+    fname : str
+        Name of the file with frequencies and fitted coefficients, should
+        have 10 columns per mode
     '''
 
     if not os.path.exists(fname):
@@ -226,13 +241,14 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     df['rank'] = df['rank'].fillna(0).astype(int)
     return df
 
+
 def merge_vibs(anh6, anh4, T, verbose=True):
 
     harmonic = harmonic_df('em_freq', T)
 
     anh6['order'] = 6
     anh4['order'] = 4
-    
+
     if verbose:
         print('\n' + ' Thermochemistry per mode harmonic T = {} '.format(T).center(80, '='), end='\n\n')
         print_mode_info(harmonic)
@@ -257,6 +273,7 @@ def merge_vibs(anh6, anh4, T, verbose=True):
 
     return df
 
+
 def harmonic_df(fname, T):
 
     data = read_em_freq(fname)
@@ -276,34 +293,38 @@ def harmonic_df(fname, T):
 
     return df
 
+
 def get_anh_state_functions(eigenvals, T):
     '''
     Calculate the internal energy ``U`` and entropy ``S`` for an anharmonic
-    vibrational mode with eigenvalues ``eigvals`` at temperature ``T`` in kJ/mol
+    vibrational mode with eigenvalues ``eigvals`` at temperature ``T`` in
+    kJ/mol
 
     .. math::
 
-       U = N_{A}\\frac{\sum^{n}_{i=1} \epsilon_{i}\exp(\epsilon_{i}/k_{B}T) }{\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T)}
+       U &= N_{A}\\frac{\sum^{n}_{i=1} \epsilon_{i}\exp(\epsilon_{i}/k_{B}T) }{\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T)}
 
-       S = N_{A}k_{B}\log(\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T))
+       S &= N_{A}k_{B}\log(\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T))
        + \\frac{N_{A}}{T}\\frac{\sum^{n}_{i=1} \epsilon_{i}\exp(\epsilon_{i}/k_{B}T) }{\sum^{n}_{i=1} \exp(\epsilon_{i}/k_{B}T)}
 
-    Args:
-        eigenvals : numpy.array
-            Eigenvalues of the anharmonic 1D Hamiltonian in Joules
-        T : float
-            Temperature in `K`
+    Parameters
+    ----------
+    eigenvals : numpy.array
+        Eigenvalues of the anharmonic 1D Hamiltonian in Joules
+    T : float
+        Temperature in `K`
 
-    Returns:
-        (U, S) : tuple of floats
-            Tuple with the internal energy and entropy in kJ/mol
+    Returns
+    -------
+    (U, S) : tuple of floats
+        Tuple with the internal energy and entropy in kJ/mol
     '''
 
-    kT = Boltzmann*T
-    sum1 = np.sum(eigenvals * np.exp(-eigenvals/kT))
-    sum2 = np.sum(np.exp(-eigenvals/kT))
+    kT = Boltzmann * T
+    sum1 = np.sum(eigenvals * np.exp(-eigenvals / kT))
+    sum2 = np.sum(np.exp(-eigenvals / kT))
 
-    U = Avogadro*sum1/sum2
-    S = Boltzmann*Avogadro*np.log(sum2) + Avogadro*sum1/(sum2*T)
+    U = Avogadro * sum1 / sum2
+    S = Boltzmann * Avogadro * np.log(sum2) + Avogadro * sum1 / (sum2 * T)
     # convert J/mol to kJ/mol
-    return (U*1.0e-3, S*1.0e-3)
+    return (U * 1.0e-3, S * 1.0e-3)

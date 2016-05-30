@@ -20,13 +20,14 @@ def harmonic(x, freq, mu):
     '''
     Calculate the harmonic potential
 
-    Args:
-        x : float of numpy.array
-            Coordinate
-        mu : float
-            Reduced mass
-        freq : float
-            Frequency in cm^-1
+    Parameters
+    ----------
+    x : float of numpy.array
+        Coordinate
+    mu : float
+        Reduced mass
+    freq : float
+        Frequency in cm^-1
     '''
 
     kconst = 0.5*mu*(freq*100*value('inverse meter-hartree relationship'))**2
@@ -40,8 +41,8 @@ def plot_mode(mode, pes, coeff6, coeff4):
     sns.set(font_scale=1.5, style='whitegrid')
     plt.figure(figsize=(14, 10))
 
-    poly6 = np.poly1d(coeff6.loc[mode, 'a0' : 'a6'].values[::-1])
-    poly4 = np.poly1d(coeff4.loc[mode, 'a0' : 'a4'].values[::-1])
+    poly6 = np.poly1d(coeff6.loc[mode, 'a0': 'a6'].values[::-1])
+    poly4 = np.poly1d(coeff4.loc[mode, 'a0': 'a4'].values[::-1])
     harm = partial(harmonic, freq=coeff6.loc[mode, 'freq'], mu=coeff6.loc[mode, 'mass'])
 
     lw = 1.2   # line width

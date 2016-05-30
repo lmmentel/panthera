@@ -88,19 +88,26 @@ def project(atoms, hessian, ndof, proj_translations=True,
     Project out the translational and/or rotational degrees of freedom
     from the hessian.
 
-    Args:
-        atoms : ase.Atoms
-            Atoms object
-        ndof : int
-            Number of degrees of freedom
-        hessian : numpy.array
-            Hessian/force constant matrix
-        proj_translations : bool
-            If ``True`` translational degrees of freedom will be projected from
-            the hessian
-        proj_rotations : bool
-            If ``True`` rotational degrees of freedom will be projected from
-            the hessian
+    Parameters
+    ----------
+    atoms : ase.Atoms
+        Atoms object
+    ndof : int
+        Number of degrees of freedom
+    hessian : array_like
+        Hessian/force constant matrix
+    proj_translations : bool
+        If ``True`` translational degrees of freedom will be projected from
+        the hessian
+    proj_rotations : bool
+        If ``True`` rotational degrees of freedom will be projected from
+        the hessian
+
+    Returns
+    -------
+    proj_hessian : array_like
+        Hessian matrix with translational and/or rotational degrees of
+        freedom projected out
     '''
 
     if verbose:
@@ -183,23 +190,25 @@ def get_harmonic_vibrations(hessian, atoms, proj_translations=True,
     ``proj_translations`` and ``proj_rotations`` argsuments in ``job``
     respectively.
 
-    Args:
-        hessian : np.array
-            Force constant (Hessian) matrix, should be square and symmetrized
-            and converted to atomic units
-        atoms : Atoms
-            ASE atoms object
-        proj_translations : bool
-            If ``True`` translational degrees of freedom will be projected from
-            the hessian
-        proj_rotations : bool
-            If ``True`` rotational degrees of freedom will be projected from
-            the hessian
+    Parameters
+    ----------
+    hessian : array_like
+        Force constant (Hessian) matrix, should be square and symmetrized
+        and converted to atomic units
+    atoms : Atoms
+        ASE atoms object
+    proj_translations : bool
+        If ``True`` translational degrees of freedom will be projected from
+        the hessian
+    proj_rotations : bool
+        If ``True`` rotational degrees of freedom will be projected from
+        the hessian
 
-    Returns:
-        out : (w, v)
-            tuple of numpy arrays with hessian eigevalues and eiegenvectors in
-            atomic units
+    Returns
+    -------
+    out : (w, v)
+        Tuple of numpy arrays with hessian eigevalues and eiegenvectors in
+        atomic units
     '''
 
     # threshold for keeping the small eigenvalues of the hamiltonian

@@ -22,13 +22,15 @@ def temperature_range(conditions):
     Calculate the temperature grid from the input values and return them as
     numpy array
 
-    Args:
-        conditions : dict
-            Variable for conditions read from the input/config
+    Parameters
+    ----------
+    conditions : dict
+        Variable for conditions read from the input/config
 
-    Returns:
-        temps : numpy.array
-            Array with the temperature grid
+    Returns
+    -------
+    temps : numpy.array
+        Array with the temperature grid
     '''
 
     epsilon = np.finfo(np.float).eps

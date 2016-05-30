@@ -35,12 +35,13 @@ for mod_name in MOCK_MODULES:
 __location__ = os.path.join(os.getcwd(), os.path.dirname(
     inspect.getfile(inspect.currentframe())))
 
-output_dir = os.path.join(__location__, "_reference")
+#output_dir = os.path.join(__location__, "_reference")
 module_dir = os.path.join(__location__, "../../panther")
-cmd_line_template = "sphinx-apidoc -f --separate -o {outputdir} {moduledir}"
-cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
-apidoc.main(cmd_line.split(" "))
+#cmd_line_template = "sphinx-apidoc -f --separate -o {outputdir} {moduledir}"
+#cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
+#apidoc.main(cmd_line.split(" "))
 
+autosummary_generate = True
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -59,10 +60,12 @@ sys.path.insert(0, os.path.abspath(os.path.basename(module_dir)))
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
+    'numpydoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -142,7 +145,8 @@ todo_include_todos = False
 # a list of builtin themes.
 #html_theme = "sphinx_rtd_theme"
 #html_theme = "bootstrap"
-html_theme = "nature"
+#html_theme = "nature"
+html_theme = 'nature_with_gtoc'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -150,7 +154,7 @@ html_theme = "nature"
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = []
+html_theme_path = ['themes']
 #html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 #html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
