@@ -1,9 +1,8 @@
+
 ''' panther setup script'''
 
-from setuptools.command.test import test as TestCommand
-import sys
-
 from setuptools import setup
+
 
 def readme():
     '''Return the contents of the README.md file.'''
@@ -13,13 +12,13 @@ def readme():
 setup(
     author = "Lukasz Mentel",
     author_email = "lmmentel@gmail.com",
-    description = "Functions for calculating thermochemistry with anharmonic corrections",
+    description = "Package for calculating thermochemistry with anharmonic corrections",
     include_package_data = True,
     entry_points = {
         'console_scripts' : [
             'panther = panther.panther:main',
-            'plotmode = panther.plotting:main',
-            'writemodes = panther.inputreader:write_modes_cli',
+            'plotmode = panther.cli:plot_mode_cli',
+            'writemodes = panther.cli:write_modes_cli',
         ]
     },
     license = open('LICENSE.rst').read(),

@@ -3,8 +3,6 @@
 
 from __future__ import print_function, division
 
-import argparse
-import os
 from functools import partial
 
 import numpy as np
@@ -12,8 +10,6 @@ from scipy.constants import value
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-from .inputreader import read_em_freq, read_pes
 
 
 def harmonic(x, freq, mu):
@@ -30,7 +26,7 @@ def harmonic(x, freq, mu):
         Frequency in cm^-1
     '''
 
-    kconst = 0.5*mu*(freq*100*value('inverse meter-hartree relationship'))**2
+    kconst = 0.5 * mu * (freq * 100 * value('inverse meter-hartree relationship'))**2
     return kconst * x**2
 
 
@@ -63,34 +59,3 @@ def plot_mode(mode, pes, coeff6, coeff4):
     plt.ylabel('$\Delta E$')
     plt.legend(loc='best', frameon=False)
     plt.show()
-
-
-def main():
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('mode', type=int, help='number of the mode to be printed')
-    parser.add_argument('-s', '--sixth', default='em_freq',
-                        help='file with sixth order polynomial fit, default="em_freq"')
-    parser.add_argument('-f', '--fourth', default='em_freq_4th',
-                        help='file with fourth order polynomial fit, default="em_freq_4th"')
-    parser.add_argument('-p', '--pes', default='test_anharm',
-                        help='file with the potential energy surface (PES), default="test_anharm"')
-    args = parser.parse_args()
-
-    if os.path.exists(args.sixth):
-        coeff6 = read_em_freq(args.sixth)
-    else:
-        raise OSError('File {} does not exist'.format(args.sixth))
-    if os.path.exists(args.fourth):
-        coeff4 = read_em_freq(args.fourth)
-    else:
-        raise OSError('File {} does not exist'.format(args.fourth))
-    if os.path.exists(args.sixth):
-        pes = read_pes(args.pes)
-    else:
-        raise OSError('File {} does not exist'.format(args.pes))
-
-    if args.mode > max(pes.keys()):
-        raise ValueError('Mode number {} unavailable, max mode number is: {}'.format(args.mode, max(pes.keys())))
-
-    plot_mode(args.mode, pes, coeff6, coeff4)

@@ -9,7 +9,7 @@ import os
 import sys
 import io
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import numpy as np
 import pandas as pd
@@ -41,17 +41,17 @@ def parse_arguments():
         raise ValueError('Specified file <{}> does not exist'.format(args.config))
 
     defaults = {
-        'Tinitial'        : '303.15',
-        'Tfinal'          : '303.15',
-        'Tstep'           : '0.0',
-        'pressure'        : '1.0',
-        'translations'    : 'true',
-        'rotations'       : 'true',
-        'pointgroup'      : 'C1',
-        'phase'           : 'gas',
-        'code'            : None,
-        'internal_fname'  : 'default',
-        'eigenhess_fname' : 'userinstr',
+        'Tinitial'       : '303.15',
+        'Tfinal'         : '303.15',
+        'Tstep'          : '0.0',
+        'pressure'       : '1.0',
+        'translations'   : 'true',
+        'rotations'      : 'true',
+        'pointgroup'     : 'C1',
+        'phase'          : 'gas',
+        'code'           : None,
+        'internal_fname' : 'default',
+        'eigenhess_fname': 'userinstr',
     }
 
     config = cp.ConfigParser(defaults=defaults, allow_no_value=True)
@@ -121,20 +121,22 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2au=True,
     '''
     Parse the hessian from the VASP ``OUTCAR`` file into a numpy array
 
-    Args:
-        outcar : str
-            Name of the VASP output, default is ``OUTCAR``
-        symmetrize : bool
-            If ``True`` the hessian will be symmetrized
-        covert2au : bool
-            If ``True`` convert the hessian to atomic units, in the other
-            case hessian is returned in [eV/Angstrom**2]
-        negative : bool
-            If ``True`` the hessian will be multiplied by -1 on return
+    Parameters
+    ----------
+    outcar : str
+        Name of the VASP output, default is ``OUTCAR``
+    symmetrize : bool
+        If ``True`` the hessian will be symmetrized
+    covert2au : bool
+        If ``True`` convert the hessian to atomic units, in the other
+        case hessian is returned in [eV/Angstrom**2]
+    negative : bool
+        If ``True`` the hessian will be multiplied by -1 on return
 
-    Returns:
-        hessian : numpy.array
-            Hessian matrix
+    Returns
+    -------
+    hessian : numpy.array
+        Hessian matrix
 
     .. note::
        By default VASP prints negative hessian so the elements are
@@ -177,86 +179,6 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2au=True,
             return hessian
     else:
         raise ValueError('No hessian found in file: {}'.format(outcar))
-
-
-def read_em_freq(fname):
-    '''
-    Read the file ``fname`` with the frequencies, reduced masses and fitted
-    fitted coefficients for the potential  into a pandas DataFrame.
-
-    Args:
-        fname : str
-            Name of the file
-    '''
-
-    cols = ['type', 'freq', 'mass', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']
-    data = pd.read_csv(fname, sep=r'\s+', engine='python', names=cols)
-    data.set_index(np.arange(1, data.shape[0] + 1), inplace=True)
-    for col in cols[1:]:
-        data[col] = data[col].astype(float)
-    return data
-
-
-def read_pes(fname):
-    '''
-    Parse the file with the potential energy surface (PES) into a dict of
-    numpy arrays with mode numbers as keys
-
-    Args:
-        fname : str
-            Name of the file with PES
-    '''
-
-    with open(fname, 'r') as fobj:
-        data = fobj.read()
-
-    pat = re.compile(' Scan along mode # =\s*(\d+)')
-    parsed = [x for x in pat.split(data) if x != '']
-    it = iter(parsed)
-    parsed = {int(mode): np.loadtxt(io.StringIO(pes)) for mode, pes in zip(it, it)}
-    return parsed
-
-
-def write_internal(atoms, hessian, job):
-    '''
-    Write a file with the system details
-    '''
-
-    with open(job['internal_fname'], 'w') as fout:
-
-        fout.write('start title:\n')
-        fout.write('End of frequencies calculation\n')
-
-        fout.write('start lattice\n')
-        for row in atoms.get_cell():
-            fout.write('{0:15.9f} {1:15.9f} {2:15.9f}\n'.format(*tuple(row)))
-        fout.write('end lattice\n')
-
-        fout.write('start atoms\n')
-        for atom in atoms:
-            fout.write('{0:2s} {1:15.5f} {2:15.5f} {3:15.5f} T T T\n'.format(
-                atom.symbol, *tuple(atom.position)))
-        fout.write('end atoms\n')
-
-        fout.write('start energy\n')
-        fout.write('{0:15.8f}\n'.format(atoms.get_potential_energy()))
-        fout.write('end energy\n')
-
-        if len(atoms) * 3 == hessian.shape[0]:
-            hesstype = 'full'
-        else:
-            hesstype = 'partial'
-
-        fout.write('input hessian\n')
-        fout.write('{0:s}\n'.format(hesstype))
-
-        fout.write('start hessian matrix\n')
-        for row in hessian:
-            fout.write(' '.join(['{0:15.8f}'.format(x) for x in row]) + '\n')
-        fout.write('end hessian matrix\n')
-
-    print('wrote file: "{}" with the data in internal format'.format(
-        job['internal_fname']))
 
 
 def print_mode_info(df):
@@ -316,25 +238,138 @@ def write_modes(filename='POSCARs'):
         traj.close()
 
 
-def write_modes_cli():
+# parsers and write methods for legacy EIGEN_HESS files
+
+def read_bmatdat():
     '''
-    Parse the filename with multiple POSCARS form command line and write
-    trajectory files with vibrational modes
+    Read the ``bmat.dat`` file with internal coordiantes and the B matrix
+    produced by the original ``writeBmat`` code
+
+    Returns
+    -------
+    internals, Bmatrix : tuple
+        Internal coordiantes and B matrix
     '''
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('filename',
-                        default='POSCARs',
-                        help='name of the file with structures, default="POSCARs"')
-    parser.add_argument('-d', '--dir',
-                        default='modes',
-                        help='directory to put the modes, default="modes"')
-    args = parser.parse_args()
+    with open('bmat.dat', 'r') as fdat:
+        lines = fdat.readlines()
 
-    args.filename = os.path.abspath(args.filename)
+    nint, ndof = (int(x) for x in lines[1].split())
+    coordlno = next(i for i, line in enumerate(lines) if 'Coordinates (au):' in line)
+    bmatlno = next(i for i, line in enumerate(lines) if 'Bmatrix(ij):' in line)
 
-    if not os.path.exists(args.dir):
-        os.makedirs(args.dir)
+    internals = np.array([tuple(row.split()[:2]) for row in lines[coordlno + 1:coordlno + nint + 1]],
+                         dtype=[('type', 'S4'), ('value', np.float32)])
 
-    os.chdir(args.dir)
-    write_modes(args.filename)
+    Bmatrix = np.zeros((nint, ndof), dtype=float)
+
+    for line in lines[bmatlno + 1:]:
+        i, j, val = line.split()
+        Bmatrix[int(i) - 1, int(j) - 1] = float(val)
+
+    return internals, Bmatrix
+
+
+def read_em_freq(fname):
+    '''
+    Read the file ``fname`` with the frequencies, reduced masses and fitted
+    fitted coefficients for the potential  into a pandas DataFrame.
+
+    Parameters
+    ----------
+    fname : str
+        Name of the file with PES
+    '''
+
+    cols = ['type', 'freq', 'mass', 'a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']
+    data = pd.read_csv(fname, sep=r'\s+', engine='python', names=cols)
+    data.set_index(np.arange(1, data.shape[0] + 1), inplace=True)
+    for col in cols[1:]:
+        data[col] = data[col].astype(float)
+    return data
+
+
+def read_pes(fname):
+    '''
+    Parse the file with the potential energy surface (PES) into a dict of
+    numpy arrays with mode numbers as keys
+
+    Parameters
+    ----------
+    fname : str
+        Name of the file with PES
+    '''
+
+    with open(fname, 'r') as fobj:
+        data = fobj.read()
+
+    pat = re.compile(' Scan along mode # =\s*(\d+)')
+    parsed = [x for x in pat.split(data) if x != '']
+    it = iter(parsed)
+    parsed = {int(mode): np.loadtxt(io.StringIO(pes)) for mode, pes in zip(it, it)}
+    return parsed
+
+
+def read_poscars(filename):
+    '''
+    Read POSCARs file with the displaced structures and return
+    an OrderedDict with the Atoms objects
+    '''
+
+    pat = re.compile(r'Mode\s*=\s*(\d+)\s*point\s*=\s*(-?\d+)')
+
+    if os.path.exists(filename):
+        with open(filename, 'r') as fdata:
+            poscars = fdata.read()
+    else:
+        raise OSError('File "{}" does not exist'.format(filename))
+
+    parsed = [x for x in pat.split(poscars) if x != ' ']
+    images = OrderedDict()
+
+    it = iter(parsed)
+    for mode, point, geometry in zip(it, it, it):
+        images[tuple([int(mode) -1, int(point)])] = read_vasp(io.StringIO(unicode(geometry)))
+    return images
+
+
+def write_internal(atoms, hessian, job):
+    '''
+    Write a file with the system details
+    '''
+
+    with open(job['internal_fname'], 'w') as fout:
+
+        fout.write('start title:\n')
+        fout.write('End of frequencies calculation\n')
+
+        fout.write('start lattice\n')
+        for row in atoms.get_cell():
+            fout.write('{0:15.9f} {1:15.9f} {2:15.9f}\n'.format(*tuple(row)))
+        fout.write('end lattice\n')
+
+        fout.write('start atoms\n')
+        for atom in atoms:
+            fout.write('{0:2s} {1:15.5f} {2:15.5f} {3:15.5f} T T T\n'.format(
+                atom.symbol, *tuple(atom.position)))
+        fout.write('end atoms\n')
+
+        fout.write('start energy\n')
+        fout.write('{0:15.8f}\n'.format(atoms.get_potential_energy()))
+        fout.write('end energy\n')
+
+        if len(atoms) * 3 == hessian.shape[0]:
+            hesstype = 'full'
+        else:
+            hesstype = 'partial'
+
+        fout.write('input hessian\n')
+        fout.write('{0:s}\n'.format(hesstype))
+
+        fout.write('start hessian matrix\n')
+        for row in hessian:
+            fout.write(' '.join(['{0:15.8f}'.format(x) for x in row]) + '\n')
+        fout.write('end hessian matrix\n')
+
+    print('wrote file: "{}" with the data in internal format'.format(
+        job['internal_fname']))
