@@ -183,8 +183,8 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     print('Number of read frequencies from {0:s}: {1:5d}'.format(fname, data.shape[0]))
 
     au2joule = value('hartree-joule relationship')
-    invcm2au = 100*value('inverse meter-hartree relationship')
-    kT = Boltzmann*temp
+    invcm2au = 100 * value('inverse meter-hartree relationship')
+    kT = Boltzmann * temp
 
     df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'converged', 'info', 'rank', 'type'],
                       index=pd.Index(np.arange(1, nvibdof + 1), name='mode'), dtype=float)
@@ -200,7 +200,7 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
 
             while not terminate:
 
-                hamil = get_hamiltonian(rank, row.freq*invcm2au, row.mass, row.loc['a0':'a6'].values)
+                hamil = get_hamiltonian(rank, row.freq * invcm2au, row.mass, row.loc['a0':'a6'].values)
                 w, v = np.linalg.eig(hamil)
                 w = np.sort(w)
                 qvib = np.sum(np.exp(-w * au2joule / kT))
@@ -208,12 +208,12 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
                 if niter == 0:
                     deltaq = 2.0 * qvib
 
-                anhfreq = (w[1] - w[0])/invcm2au
+                anhfreq = (w[1] - w[0]) / invcm2au
                 zpve = w[0] * au2joule * 1.0e-3 * Avogadro
                 U, S = get_anh_state_functions(w * au2joule, temp)
 
                 terminate = (np.abs(qvib - qvib_last) < QVIB_THRESH)\
-                             & (np.abs(w[0] - freq_last) < FREQ_THRESH)
+                            & (np.abs(w[0] - freq_last) < FREQ_THRESH)
 
                 if terminate:
                     if anhfreq < row.freq:
@@ -284,10 +284,10 @@ def harmonic_df(fname, T):
     kT = Boltzmann * T
     df['type'] = 'H'
     df['freq'] = data['freq']
-    df['energy'] = Planck*df['freq']*100.0*value('inverse meter-hertz relationship')
+    df['energy'] = Planck * df['freq'] * 100.0 * value('inverse meter-hertz relationship')
     df = df[df['freq'] > 0.0]
-    df['zpve'] = 0.5*df['energy']*1.0e-3*Avogadro
-    df['qvib'] = 1.0/(1.0 - np.exp(-df['energy']/kT))
+    df['zpve'] = 0.5 * df['energy'] * 1.0e-3 * Avogadro
+    df['qvib'] = 1.0 / (1.0 - np.exp(-df['energy'] / kT))
     df['U'] = df['zpve'] + 1.0e-3*gas_constant*df['energy']/(np.exp(df['energy']/kT) -1.0)/Boltzmann
     df['S'] = 1.0e-3*gas_constant*(df['energy']/(np.exp(df['energy']/kT) -1.0)/kT - np.log(1.0 - np.exp(-df['energy']/kT)))
 

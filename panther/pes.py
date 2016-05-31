@@ -4,7 +4,7 @@ import pandas as pd
 from scipy.constants import value
 
 
-def calculate_energies(images, modeinfo, calc, modes='all'):
+def calculate_energies(images, calc, modes='all'):
     '''
     Given a set of images as a nested OrderedDict of Atoms objects and a
     calculator, calculate the energy for each displaced structure
@@ -13,9 +13,6 @@ def calculate_energies(images, modeinfo, calc, modes='all'):
     ----------
     images : OrderedDict
         A nested OrderedDict of displaced Atoms objects
-    modeinfo : pandas.DataFrame
-        DataFrame with per mode characteristics, displacements, masses
-        and a flag to mark it a mode is a stretching mode or not
     calc : calculator instance
     modes : str or list
 
@@ -55,7 +52,9 @@ def fit_potentials(modeinfo, energies):
 
     Parameters
     ----------
-    modeinfo: pd.DataFrame
+    modeinfo : pandas.DataFrame
+        DataFrame with per mode characteristics, displacements, masses
+        and a flag to mark it a mode is a stretching mode or not
     energies : pd.DataFrame
         Energies per displacement
 
@@ -73,8 +72,6 @@ def fit_potentials(modeinfo, energies):
     D = np.dot(modeinfo['displacement'].reshape(-1, 1), np.arange(-4, 5).reshape(1, -1))
     D = D / np.sqrt(modeinfo['effective_mass'].values).reshape(-1, 1)
     D = D.astype(float)
-
-    nmodes, npoints = E.shape
 
     coeffs6o = pd.DataFrame(index=energies.index,
                             columns=['c_' + str(x) for x in np.arange(6, -1, -1)])

@@ -1,5 +1,5 @@
 
-'Main package file for the themopy package'
+'Python package for Anharmonic Thermochemistry'
 
 from __future__ import print_function, division
 
