@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 import numpy as np
 import pandas as pd
 from scipy.constants import value
@@ -37,7 +39,7 @@ def calculate_energies(images, calc, modes='all'):
 
     for mode in modes:
         for point in images[mode].keys():
-
+            print('# calculating energy for mode: {} point: {}'.format(mode, point))
             atoms = images[mode][point]
             atoms.set_calculator(calc)
             energy = atoms.get_potential_energy()
