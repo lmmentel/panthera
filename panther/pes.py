@@ -43,6 +43,7 @@ def calculate_energies(images, calc, modes='all'):
             atoms = images[mode][point]
             atoms.set_calculator(calc)
             energy = atoms.get_potential_energy()
+            print('## E[{0:d}, {1:d}] : {2:25.12f}'.format(mode, point, energy))
             energies.set_value(mode, 'E_' + str(point), energy)
 
     return energies
