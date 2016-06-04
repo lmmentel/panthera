@@ -8,11 +8,12 @@ from builtins import (bytes, str, open, super, range,
 import numpy as np
 from scipy.constants import value, pi, Avogadro, Planck, hbar, Boltzmann, gas_constant
 
+
 def constraints2mask(atoms):
     '''
     Convert constraints from default ase objects to VASP compatible numpy array
-    of boolean triples describing whether atomic degress of freedom are fixed in
-    x, y, z dimensions
+    of boolean triples describing whether atomic degress of freedom are fixed
+    in x, y, z dimensions
 
     Parameters
     ----------
@@ -82,25 +83,23 @@ def get_total_mass(atoms):
 class Thermochemistry(object):
 
     '''
-    Thermochemistry the results will be in kJ/mol
+    Thermochemistry the results will be in kJ/mol by default standard
+    conditions for temperature and pressure T=273.15 K, p=0.1 MPa
 
     Parameters
     ----------
     atoms : ase.Atoms
         Atoms obect
-    conditions : dict
-        Dictionary with the conditions specicification
     system : dict
         Dicitonary with the system specification
     '''
 
-    def __init__(self, atoms, conditions, system):
+    def __init__(self, atoms, system):
 
         self.atoms = atoms
-        self.conditions = conditions
         self.system = system
 
-    def get_qrotational(self, T):
+    def get_qrotational(self, T=273.15):
         '''
         Calculate the rotational partition function in a rigid rotor
         approximation
@@ -127,13 +126,13 @@ class Thermochemistry(object):
 
             sigma = self.system['symmetrynumber']
             if self.system['pointgroup'] in ['Coov', 'Dooh']:
-                return 2.0*np.max(I)*Boltzmann*T/(sigma*hbar**2)
+                return 2.0 * np.max(I) * Boltzmann * T / (sigma * hbar**2)
             else:
                 return np.sqrt(pi*np.product(I)*np.power(2.0*Boltzmann*T/hbar**2, 3))/sigma
         else:
             return 0.0
 
-    def get_qtranslational(self, T):
+    def get_qtranslational(self, T=273.15, p=0.1):
         '''
         Calculate the translational partition function for a mole of ideal gas
         at temperature `T`
@@ -144,6 +143,8 @@ class Thermochemistry(object):
             Atoms
         T : float
             Temperature in K
+        p : float
+            Pressure in MPa
 
         Notes
         -----
@@ -156,14 +157,14 @@ class Thermochemistry(object):
 
         if self.system['phase'] == 'gas':
 
-            vol = gas_constant * T / (self.conditions['pressure'] * 1.0e6)
+            vol = gas_constant * T / (p * 1.0e6)
             totmass = get_total_mass(self.atoms)
 
-            return vol*np.power(2.0*pi*totmass*Boltzmann*T/Planck**2, 1.5)/Avogadro
+            return vol * np.power(2.0 * pi * totmass * Boltzmann * T / Planck**2, 1.5) / Avogadro
         else:
             return 0.0
 
-    def get_translational_energy(self, T):
+    def get_translational_energy(self, T=273.15):
         '''
         Calculate the translational energy
 
@@ -178,7 +179,7 @@ class Thermochemistry(object):
         else:
             return 0.0
 
-    def get_translational_entropy(self, T):
+    def get_translational_entropy(self, T=273.15):
         '''
         Calculate the translational entropy
 
@@ -194,7 +195,7 @@ class Thermochemistry(object):
         else:
             return 0.0
 
-    def get_rotational_energy(self, T):
+    def get_rotational_energy(self, T=273.15):
         '''
         Calculate the rotational energy
 
@@ -214,7 +215,7 @@ class Thermochemistry(object):
 
         return energy_rot
 
-    def get_rotational_entropy(self, T):
+    def get_rotational_entropy(self, T=273.15):
         '''
         Calculate the rotational entropy
 
@@ -235,7 +236,7 @@ class Thermochemistry(object):
 
         return entropy_rot
 
-    def summary(self, T):
+    def summary(self, T=273.15, p=0.1):
         '''
         Print summary with the thermochemical data at temperature `T` in kJ/mol
 
@@ -243,13 +244,15 @@ class Thermochemistry(object):
         ----------
         T : float
             Temperature in `K`
+        p : float
+            Pressure in MPa
         '''
 
         print('\n' + 'THERMOCHEMISTRY'.center(50, '='))
-        print('\n\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa\n'.format(T, self.conditions['pressure']))
-        print('-'*50)
+        print('\n\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa\n'.format(T, p))
+        print('-' * 50)
 
-        print('{0:<25s} : {1:15.3f}'.format('ln qtranslational', np.log(self.get_qtranslational(T))))
+        print('{0:<25s} : {1:15.3f}'.format('ln qtranslational', np.log(self.get_qtranslational(T, p))))
         print('{0:<25s} : {1:15.3f}'.format('ln qrotational', np.log(self.get_qrotational(T))))
 
         print('{0:<25s} : {1:15.3f}  kJ/mol'.format('U translational', self.get_translational_energy(T)))
@@ -269,15 +272,13 @@ class HarmonicThermo(Thermochemistry):
         Vibrational energies in Joules
     atoms : ase.Atoms
         Atoms obect
-    conditions : dict
-        Dictionary with the conditions specicification
     system : dict
         Dicitonary with the system specification
     '''
 
-    def __init__(self, vibenergies, atoms, conditions, system):
+    def __init__(self, vibenergies, atoms, system):
 
-        super().__init__(atoms, conditions, system)
+        super().__init__(atoms, system)
         self.vibenergies = vibenergies
 
     def get_zpve(self):
@@ -295,7 +296,7 @@ class HarmonicThermo(Thermochemistry):
 
         return 0.5 * np.sum(self.vibenergies) * Avogadro * 1.0e-3
 
-    def get_qvibrational(self, T, uselog=True):
+    def get_qvibrational(self, T=273.15, uselog=True):
         '''
         Calculate the vibrational partition function at temperature `T` in
         kJ/mol
@@ -318,11 +319,11 @@ class HarmonicThermo(Thermochemistry):
 
         kT = Boltzmann * T
         if uselog:
-            return np.sum(-np.log(1.0 - np.exp(-self.vibenergies/kT)))
+            return np.sum(-np.log(1.0 - np.exp(-self.vibenergies / kT)))
         else:
-            return np.prod(1.0/(1.0 - np.exp(-self.vibenergies/kT)))
+            return np.prod(1.0 / (1.0 - np.exp(-self.vibenergies / kT)))
 
-    def get_vibrational_energy(self, T):
+    def get_vibrational_energy(self, T=273.15):
         '''
         Calculate the vibational energy correction at temperature `T` in kJ/mol
 
@@ -341,10 +342,10 @@ class HarmonicThermo(Thermochemistry):
         '''
 
         kT = Boltzmann * T
-        frac = np.sum(self.vibenergies/(np.exp(self.vibenergies/kT) -1.0))
-        return 1.0e-3*gas_constant*frac/Boltzmann
+        frac = np.sum(self.vibenergies / (np.exp(self.vibenergies / kT) - 1.0))
+        return 1.0e-3 * gas_constant * frac / Boltzmann
 
-    def get_vibrational_entropy(self, T):
+    def get_vibrational_entropy(self, T=273.15):
         '''
         Calculate the vibrational entropy at temperature `T` in kJ/mol
 
@@ -365,11 +366,11 @@ class HarmonicThermo(Thermochemistry):
 
         kT = Boltzmann * T
 
-        frac = np.sum(self.vibenergies/(np.exp(self.vibenergies/kT) -1.0))/kT
-        nlog = np.sum(np.log(1.0 - np.exp(-self.vibenergies/kT)))
-        return 1.0e-3*gas_constant*(frac - nlog)
+        frac = np.sum(self.vibenergies / (np.exp(self.vibenergies / kT) - 1.0)) / kT
+        nlog = np.sum(np.log(1.0 - np.exp(-self.vibenergies / kT)))
+        return 1.0e-3 * gas_constant * (frac - nlog)
 
-    def summary(self, T):
+    def summary(self, T=273.15, p=0.1):
         '''
         Print summary with the thermochemical data at temperature `T` in kJ/mol
 
@@ -382,11 +383,11 @@ class HarmonicThermo(Thermochemistry):
         if self.system['phase'] == 'solid':
             lnqtrans = lnqrot = 0.0
         else:
-            lnqtrans = np.log(self.get_qtranslational(T))
+            lnqtrans = np.log(self.get_qtranslational(T, p))
             lnqrot = np.log(self.get_qrotational(T))
 
         print('\n' + ' THERMOCHEMISTRY '.center(50, '='), end='\n\n')
-        print('\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa'.format(T, self.conditions['pressure']), end='\n\n')
+        print('\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa'.format(T, p), end='\n\n')
         print('-' * 50)
 
         print('Partition functions:')
@@ -433,15 +434,13 @@ class AnharmonicThermo(Thermochemistry):
             - ``S`` entropy contribution from a given mode
     atoms : ase.Atoms
         Atoms obect
-    conditions : dict
-        Dictionary with the conditions specicification
     system : dict
         Dicitonary with the system specification
     '''
 
-    def __init__(self, df, atoms, conditions, system):
+    def __init__(self, df, atoms, system):
 
-        super().__init__(atoms, conditions, system)
+        super().__init__(atoms, system)
         self.df = df
 
     def get_zpve(self):
@@ -462,7 +461,7 @@ class AnharmonicThermo(Thermochemistry):
         '''
 
         if uselog:
-            return np.sum(np.log(self.df.qvib.astype('float64')))
+            return np.log(self.df.qvib.astype('float64').sum())
         else:
             return self.df.qvib.sum()
 
@@ -480,7 +479,7 @@ class AnharmonicThermo(Thermochemistry):
 
         return self.df.S.sum()
 
-    def summary(self, T):
+    def summary(self, T=273.15, p=0.1):
         '''
         Print summary with the thermochemical data at temperature `T` in kJ/mol
 
@@ -493,11 +492,11 @@ class AnharmonicThermo(Thermochemistry):
         if self.system['phase'] == 'solid':
             lnqtrans = lnqrot = 0.0
         else:
-            lnqtrans = np.log(self.get_qtranslational(T))
+            lnqtrans = np.log(self.get_qtranslational(T, p))
             lnqrot = np.log(self.get_qrotational(T))
 
         print('\n' + ' THERMOCHEMISTRY '.center(50, '='), end='\n\n')
-        print('\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa'.format(T, self.conditions['pressure']), end='\n\n')
+        print('\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa'.format(T, p), end='\n\n')
         print('-' * 50)
 
         print('Partition functions:')
