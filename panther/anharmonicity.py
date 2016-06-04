@@ -3,13 +3,12 @@
 
 from __future__ import print_function, division, absolute_import
 
-import os
 import numpy as np
 import pandas as pd
 
 from scipy.constants import value, Boltzmann, Avogadro, Planck, gas_constant
 
-from .inputreader import read_em_freq, print_mode_info
+from .inputreader import print_mode_info
 
 
 def factsqrt(m, n):
@@ -94,8 +93,8 @@ def get_hamiltonian(rank, freq, mass, coeffs):
     Hamil = np.zeros((rank, rank), dtype=float)
 
     # change this to proper value
-    vk = np.sqrt(1.0/(mass*freq))
-    uk = -0.5*freq
+    vk = np.sqrt(1.0 / (mass * freq))
+    uk = -0.5 * freq
 
     # main diagonal i == j
     idx = np.arange(rank)
@@ -149,7 +148,7 @@ def get_hamiltonian(rank, freq, mass, coeffs):
     return Hamil
 
 
-def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
+def anharmonic_frequencies(atoms, T, coeffs, modeinfo, nvibdof):
     '''
     Calculate the anharmonic frequencies
 
@@ -157,40 +156,28 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     ----------
     atoms : ase.Atoms
         Atoms object
-    temp : float
+    T : float
         Temperature in `K`
-    job : dict
-        Dictionary with the job specicification
-    system : dict
-        Dicitonary with the system specification
-    fname : str
-        Name of the file with frequencies and fitted coefficients, should
-        have 10 columns per mode
+    coeffs : pandas.DataFrame
+    modeinfo : pandas.DataFrame
+    nvibdof : int
+        Number of vibrational degrees of freedom
     '''
-
-    if not os.path.exists(fname):
-        raise OSError('File "{}" does not exist'.format(fname))
 
     MAXITER = 100
     QVIB_THRESH = 1.0e-8
-    FREQ_THRESH = 1.0e-6
-
-    data = read_em_freq(fname)
-
-    nvibdof = get_vibdof(atoms, job, system)
+    FREQ_THRESH = 1.0e-7
 
     print('Number of vibrational DOF : {0:5d}'.format(nvibdof))
-    print('Number of read frequencies from {0:s}: {1:5d}'.format(fname, data.shape[0]))
 
     au2joule = value('hartree-joule relationship')
     invcm2au = 100 * value('inverse meter-hartree relationship')
-    kT = Boltzmann * temp
+    kT = Boltzmann * T
 
-    df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'converged', 'info', 'rank', 'type'],
-                      index=pd.Index(np.arange(1, nvibdof + 1), name='mode'), dtype=float)
+    df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'converged', 'info', 'rank', 'type', 'd_qvib', 'd_nu'],
+                      index=pd.Index(np.arange(nvibdof), name='mode'), dtype=float)
 
-    for mode, row in data.iterrows():
-        if row.type.strip() == 'A':
+    for mode, row in coeffs.iterrows():
 
             terminate = False
             rank = 4
@@ -200,38 +187,40 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
 
             while not terminate:
 
-                hamil = get_hamiltonian(rank, row.freq * invcm2au, row.mass, row.loc['a0':'a6'].values)
+                # get polynomial coefficients
+                if row.shape[0] == 7:
+                    pc = row.values[::-1].astype(float)
+                elif row.shape[0] == 5:
+                    pc = np.append(row.values[::-1], np.zeros(2)).astype(float)
+
+                hamil = get_hamiltonian(rank, modeinfo.loc[mode, 'frequency'] * invcm2au,
+                                        modeinfo.loc[mode, 'effective_mass'], pc)
+
                 w, v = np.linalg.eig(hamil)
                 w = np.sort(w)
                 qvib = np.sum(np.exp(-w * au2joule / kT))
 
-                if niter == 0:
-                    deltaq = 2.0 * qvib
-
                 anhfreq = (w[1] - w[0]) / invcm2au
                 zpve = w[0] * au2joule * 1.0e-3 * Avogadro
-                U, S = get_anh_state_functions(w * au2joule, temp)
+                U, S = get_anh_state_functions(w * au2joule, T)
 
-                terminate = (np.abs(qvib - qvib_last) < QVIB_THRESH)\
-                            & (np.abs(w[0] - freq_last) < FREQ_THRESH)
+                d_qvib = np.abs(qvib - qvib_last)
+                d_nu = np.abs(w[0] - freq_last)
+
+                terminate = (d_qvib < QVIB_THRESH) & (d_nu < FREQ_THRESH)
 
                 if terminate:
-                    if anhfreq < row.freq:
-                        anh = (anhfreq, zpve, qvib, U, S, True, 'OK', rank, row.type.strip())
+                    if anhfreq < modeinfo.loc[mode, 'frequency']:
+                        anh = (anhfreq, zpve, qvib, U, S, True, 'OK', rank, 'A', d_qvib, d_nu)
                     else:
-                        anh = (anhfreq, zpve, qvib, U, S, True, 'AGTH', rank, row.type.strip())
+                        anh = (anhfreq, zpve, qvib, U, S, True, 'AGTH', rank, 'A', d_qvib, d_nu)
                 else:
-                    if w[0] > 0.0 and abs(qvib - qvib_last) < 1.5 * deltaq:
-                        rank += 1
-                        deltaq = abs(qvib - qvib_last)
-                        qvib_last = qvib
-                        freq_last = w[0]
-                    else:
-                        anh = (anhfreq, zpve, qvib, U, S, False, 'CP', rank, row.type.strip())
-                        break
+                    rank += 1
+                    qvib_last = qvib
+                    freq_last = w[0]
 
                     if niter >= MAXITER:
-                        anh = (anhfreq, zpve, qvib, U, S, False, 'MAXITER', rank, row.type.strip())
+                        anh = (anhfreq, zpve, qvib, U, S, False, 'MAXITER', rank, 'A', d_qvib, d_nu)
                         break
 
                 niter += 1
@@ -242,19 +231,32 @@ def anharmonic_frequencies(atoms, temp, job, system, fname='em_freq'):
     return df
 
 
-def merge_vibs(anh6, anh4, T, verbose=True):
+def merge_vibs(anh6, anh4, harmonic, verbose=False):
+    '''
+    Form a DataFrame with the per mode thermochemical
+    contributions from three separate dataframes with sixth order
+    polynomial fitted potentia, fourth order fitted potential and
+    harmonic frequencies.
 
-    harmonic = harmonic_df('em_freq', T)
+    Parameters
+    ----------
+    anh6 : pandas.DataFrame
+    anh4 : pandas.DataFrame
+    harmonic : pandas.DataFrame
 
+    Returns
+    -------
+    df : pandas.DataFrame
+    '''
     anh6['order'] = 6
     anh4['order'] = 4
 
     if verbose:
-        print('\n' + ' Thermochemistry per mode harmonic T = {} '.format(T).center(80, '='), end='\n\n')
+        print('\n' + ' Thermochemistry per mode harmonic '.center(80, '='), end='\n\n')
         print_mode_info(harmonic)
-        print('\n' + ' Thermochemistry per mode 6th order T = {} '.format(T).center(80, '='), end='\n\n')
+        print('\n' + ' Thermochemistry per mode 6th order '.center(80, '='), end='\n\n')
         print_mode_info(anh6)
-        print('\n' + ' Thermochemistry per mode 4th order T = {} '.format(T).center(80, '='), end='\n\n')
+        print('\n' + ' Thermochemistry per mode 4th order '.center(80, '='), end='\n\n')
         print_mode_info(anh4)
 
     df = pd.DataFrame(columns=anh6.columns, index=anh6.index)
@@ -266,30 +268,43 @@ def merge_vibs(anh6, anh4, T, verbose=True):
         df[col] = df[col].astype(float)
 
     if df.isnull().any(axis=1).any():
-        df.fillna(harmonic)
+        df.fillna(harmonic, inplace=True)
 
-    print('\n' + ' Final data to be used for thermochemistry T = {} '.format(T).center(80, '='), end='\n\n')
-    print_mode_info(df)
+    if verbose:
+        print('\n' + ' Final data to be used for thermochemistry '.center(80, '='), end='\n\n')
+        print_mode_info(df)
 
     return df
 
 
-def harmonic_df(fname, T):
+def harmonic_df(modeinfo, T):
+    '''
+    Calculate per mode contributions to the thermodynamic functions in the
+    harmonic approximation
 
-    data = read_em_freq(fname)
+    Parameters
+    ----------
+    modeinfo : pandas.DataFrame
+    T : float
+        Temperature in `K`
+
+    Returns
+    -------
+    df : pandas.DataFrame
+    '''
 
     df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'energy', 'type'],
-                      index=pd.Index(np.arange(1, data.shape[0] + 1), name='mode'), dtype=float)
+                      index=modeinfo.index, dtype=float)
 
     kT = Boltzmann * T
     df['type'] = 'H'
-    df['freq'] = data['freq']
+    df['freq'] = modeinfo['frequency']
     df['energy'] = Planck * df['freq'] * 100.0 * value('inverse meter-hertz relationship')
     df = df[df['freq'] > 0.0]
     df['zpve'] = 0.5 * df['energy'] * 1.0e-3 * Avogadro
     df['qvib'] = 1.0 / (1.0 - np.exp(-df['energy'] / kT))
-    df['U'] = df['zpve'] + 1.0e-3*gas_constant*df['energy']/(np.exp(df['energy']/kT) -1.0)/Boltzmann
-    df['S'] = 1.0e-3*gas_constant*(df['energy']/(np.exp(df['energy']/kT) -1.0)/kT - np.log(1.0 - np.exp(-df['energy']/kT)))
+    df['U'] = df['zpve'] + 1.0e-3 * gas_constant * df['energy'] / (np.exp(df['energy'] / kT) -1.0) / Boltzmann
+    df['S'] = 1.0e-3 * gas_constant * (df['energy'] / (np.exp(df['energy'] / kT) - 1.0) / kT - np.log(1.0 - np.exp(-df['energy'] / kT)))
 
     return df
 
