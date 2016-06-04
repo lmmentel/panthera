@@ -44,7 +44,7 @@ def parse_arguments():
         'Tinitial'       : '303.15',
         'Tfinal'         : '303.15',
         'Tstep'          : '0.0',
-        'pressure'       : '1.0',
+        'pressure'       : '0.1',
         'translations'   : 'true',
         'rotations'      : 'true',
         'pointgroup'     : 'C1',
