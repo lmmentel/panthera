@@ -183,7 +183,7 @@ def project(atoms, hessian, ndof, proj_translations=True,
 
 
 def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
-                                  proj_rotations=False):
+                                  proj_rotations=False, ascomplex=True):
     '''
     Given a force constant matrix (hessian) decide whether or not to project
     the translational and rotational degrees of freedom based on
@@ -203,6 +203,9 @@ def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
     proj_rotations : bool
         If ``True`` rotational degrees of freedom will be projected from
         the hessian
+    ascomplex : bool
+        If there are complex eigenvalues return the array as complex type
+        otherwise make the complex values negative and return array of reals
 
     Returns
     -------
@@ -241,4 +244,13 @@ def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
     wals = wals[::-1]
     vecs = vecs[:, ::-1]
 
-    return wals.astype(complex)**0.5, vecs
+    wals = wals.astype(complex)**0.5
+
+    if ascomplex:
+        return wals, vecs
+    else:
+        mask = np.iscomplex(wals)
+        wreal = np.zeros_like(wals, dtype=float)
+        wreal[~mask] = wals[~mask].real
+        wreal[mask] = -1.0 * np.abs(wals[mask].imag)
+        return wreal, vecs
