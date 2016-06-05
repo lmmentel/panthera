@@ -86,9 +86,10 @@ def get_symmetry_number(pointgroup):
        C. J. Cramer, `Essentials of Computational Chemistry, Theories and Models`,
        2nd Edition, p. 363
 
-    Args:
-        pointgroup : str
-            Symbol of the point group
+    Parameters
+    ----------
+    pointgroup : str
+        Symbol of the point group
     '''
 
     symmetrynumbers = {'Ci':  1, 'Cs':  1, 'Coov':  1, 'Dooh': 2,
