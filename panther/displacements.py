@@ -10,15 +10,38 @@ from collections import OrderedDict
 
 from writeBmat import get_internals
 
-from .vibrations import get_harmonic_vibrations
+from .vibrations import harmonic_vibrational_analysis
 
 FREQ_THRESH = 1.0e6
 DISPNORM_THRESH = 1.0e-2
 CARTDISP_THRESH = 1.0e-6
 
 
+def get_nvibdof(atoms, job, system):
+    'Calculate the number of vibrational degrees of freedom'
+
+    # get the total number of degrees of freedom
+    ndof = 3 * (len(atoms) - len(atoms.constraints))
+
+    extradof = 0
+    if system['phase'].lower() == 'gas':
+        if job['proj_rotations'] & job['proj_translations']:
+            if ndof > 6:
+                extradof = 6
+            elif ndof == 6:
+                extradof = 5
+    elif system['phase'].lower() == 'solid':
+        if job['proj_rotations'] | job['proj_translations']:
+            extradof = 3
+    else:
+        raise ValueError('Wrong phase specification: {}, expecting one of: "gas", "solid"'.format(job.phase))
+
+    return ndof - extradof
+
+
 def calculate_displacements(atoms, hessian, npoints, mode_min=None,
-                            mode_max=None, verbose=False):
+                            mode_max=None, proj_translations=True,
+                            proj_rotations=False, verbose=False):
     '''
     Calculate displacements in internal coordinates
 
@@ -84,7 +107,7 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
     Gmatrix_inv = np.linalg.pinv(Gmatrix)
 
     # calculate hessian eigenvalues and eigenvectors
-    evals, evecs = get_harmonic_vibrations(hessian, atoms,
+    evals, evecs = harmonic_vibrational_analysis(hessian, atoms,
                                            proj_translations=True,
                                            proj_rotations=True)
     vibdof = np.count_nonzero(evals)
