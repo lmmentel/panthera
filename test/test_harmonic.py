@@ -4,7 +4,7 @@ import numpy as np
 
 import ase.io
 
-from panther.vibrations import get_harmonic_vibrations
+from panther.vibrations import harmonic_vibrational_analysis
 
 from scipy.constants import angstrom, value
 
@@ -24,9 +24,9 @@ def test_harmonic_methanol():
 
     meoh = ase.io.read(os.path.join(cwd, 'data/meoh.traj'))
 
-    ewals, evecs = get_harmonic_vibrations(hessian, meoh,
-                                           proj_translations=True,
-                                           proj_rotations=True)
+    ewals, evecs = harmonic_vibrational_analysis(hessian, meoh,
+                                                 proj_translations=True,
+                                                 proj_rotations=True)
 
     eigenvalues = np.load(os.path.join(cwd, 'data/meoh_evalues.npy'))
     eigenvectors = np.load(os.path.join(cwd, 'data/meoh_evectors.npy'))
@@ -45,9 +45,9 @@ def test_harmonic_hcha():
 
     hcha = ase.io.read(os.path.join(cwd, 'data/hcha.traj'))
 
-    ewals, evecs = get_harmonic_vibrations(hessian, hcha,
-                                           proj_translations=True,
-                                           proj_rotations=False)
+    ewals, evecs = harmonic_vibrational_analysis(hessian, hcha,
+                                                 proj_translations=True,
+                                                 proj_rotations=False)
 
     eigenvalues = np.load(os.path.join(cwd, 'data/hcha_evalues.npy'))
     eigenvectors = np.load(os.path.join(cwd, 'data/hcha_evectors.npy'))
