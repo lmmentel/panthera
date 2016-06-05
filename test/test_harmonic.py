@@ -26,7 +26,8 @@ def test_harmonic_methanol():
 
     ewals, evecs = harmonic_vibrational_analysis(hessian, meoh,
                                                  proj_translations=True,
-                                                 proj_rotations=True)
+                                                 proj_rotations=True,
+                                                 ascomplex=False)
 
     eigenvalues = np.load(os.path.join(cwd, 'data/meoh_evalues.npy'))
     eigenvectors = np.load(os.path.join(cwd, 'data/meoh_evectors.npy'))
@@ -47,7 +48,8 @@ def test_harmonic_hcha():
 
     ewals, evecs = harmonic_vibrational_analysis(hessian, hcha,
                                                  proj_translations=True,
-                                                 proj_rotations=False)
+                                                 proj_rotations=False,
+                                                 ascomplex=False)
 
     eigenvalues = np.load(os.path.join(cwd, 'data/hcha_evalues.npy'))
     eigenvectors = np.load(os.path.join(cwd, 'data/hcha_evectors.npy'))
