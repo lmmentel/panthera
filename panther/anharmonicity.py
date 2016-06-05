@@ -34,28 +34,6 @@ def factsqrt(m, n):
     return np.sqrt(np.prod([m - i for i in range(n)]))
 
 
-def get_vibdof(atoms, job, system):
-    'Calculate the number of vibrational degrees of freedom'
-
-    # get the total number of degrees of freedom
-    ndof = 3 * (len(atoms) - len(atoms.constraints))
-
-    extradof = 0
-    if system['phase'].lower() == 'gas':
-        if job['proj_rotations'] & job['proj_translations']:
-            if ndof > 6:
-                extradof = 6
-            elif ndof == 6:
-                extradof = 5
-    elif system['phase'].lower() == 'solid':
-        if job['proj_rotations'] | job['proj_translations']:
-            extradof = 3
-    else:
-        raise ValueError('Wrong phase specification: {}, expecting one of: "gas", "solid"'.format(job.phase))
-
-    return ndof - extradof
-
-
 def get_hamiltonian(rank, freq, mass, coeffs):
     '''
     Compose the Hamiltonian matrix for the anharmonic oscillator with the
