@@ -182,8 +182,8 @@ def project(atoms, hessian, ndof, proj_translations=True,
     return np.dot(I - qqp, np.dot(hessian, I - qqp))
 
 
-def get_harmonic_vibrations(hessian, atoms, proj_translations=True,
-                            proj_rotations=False):
+def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
+                                  proj_rotations=False):
     '''
     Given a force constant matrix (hessian) decide whether or not to project
     the translational and rotational degrees of freedom based on
@@ -207,8 +207,9 @@ def get_harmonic_vibrations(hessian, atoms, proj_translations=True,
     Returns
     -------
     out : (w, v)
-        Tuple of numpy arrays with hessian eigevalues and eiegenvectors in
-        atomic units
+        Tuple of numpy arrays with hessian square roots of the eigevalues
+        (frequencies) and eiegenvectors in atomic units, both sorted in
+        descending order of eigenvalues
     '''
 
     # threshold for keeping the small eigenvalues of the hamiltonian
@@ -240,4 +241,4 @@ def get_harmonic_vibrations(hessian, atoms, proj_translations=True,
     wals = wals[::-1]
     vecs = vecs[:, ::-1]
 
-    return wals, vecs
+    return wals.astype(complex)**0.5, vecs
