@@ -10,8 +10,6 @@ from collections import OrderedDict
 
 from writeBmat import get_internals
 
-from .vibrations import harmonic_vibrational_analysis
-
 FREQ_THRESH = 1.0e6
 DISPNORM_THRESH = 1.0e-2
 CARTDISP_THRESH = 1.0e-6
@@ -34,14 +32,14 @@ def get_nvibdof(atoms, job, system):
         if job['proj_rotations'] | job['proj_translations']:
             extradof = 3
     else:
-        raise ValueError('Wrong phase specification: {}, expecting one of: "gas", "solid"'.format(job.phase))
+        raise ValueError('Wrong phase specification: {}, expecting either '
+                         '"gas" or "solid"'.format(job.phase))
 
     return ndof - extradof
 
 
-def calculate_displacements(atoms, hessian, npoints, mode_min=None,
-                            mode_max=None, proj_translations=True,
-                            proj_rotations=False, verbose=False):
+def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints,
+                            mode_min=None, mode_max=None, verbose=False):
     '''
     Calculate displacements in internal coordinates
 
@@ -50,7 +48,11 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
     atoms : ase.Atoms
         Atoms object
     hessian : array_like
-        Symmetric hessian matrix in atomic units [hartree/bohr**2]
+        Hessian matrix
+    freqs : array_like
+        Frequencies (square root of the hessian eigenvalues) in atomic units
+    normal_modes : array_like
+        Normal modes in atomic units
     npoints : int
         Number of points to displace structure, the code will calculate
         ``2*npoints`` displacements since + and - directions are taken
@@ -106,19 +108,15 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
     Gmatrix = np.dot(Bmatrix, np.dot(M_inv, Bmatrix.T))
     Gmatrix_inv = np.linalg.pinv(Gmatrix)
 
-    # calculate hessian eigenvalues and eigenvectors
-    evals, evecs = harmonic_vibrational_analysis(hessian, atoms,
-                                           proj_translations=True,
-                                           proj_rotations=True)
-    vibdof = np.count_nonzero(evals)
+    vibdof = np.count_nonzero(freqs)
 
-    mwevecs = np.dot(M_invsqrt, evecs)
+    mwevecs = np.dot(M_invsqrt, normal_modes)
 
     Bmatrix_inv = np.dot(M_inv, np.dot(Bmatrix.T, Gmatrix_inv))
 
     Dmatrix = np.dot(Bmatrix, mwevecs)
 
-    vibpop = vib_population(hessian, evals, Bmatrix_inv, Dmatrix, internals,
+    vibpop = vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals,
                             vibdof)
 
     # DataFrame with mode data
@@ -130,16 +128,16 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
 
     # calculate the megnitude of the displacement for all the modes
     mi.loc[mi['is_stretch'], 'displacement'] = 8.0 / np.sqrt(2.0 * pi *
-                        np.sqrt(np.abs(evals[mi['is_stretch'].values])))
+                        np.abs(freqs[mi['is_stretch'].values]))
     mi.loc[~mi['is_stretch'], 'displacement'] = 4.0 / np.sqrt(2.0 * pi *
-                        np.sqrt(np.abs(evals[~mi['is_stretch'].values])))
+                        np.abs(freqs[~mi['is_stretch'].values]))
     mi['displacement'] = mi['displacement'] / (npoints * 2.0)
     mi.to_pickle('modeinfo.pkl')
 
     images = OrderedDict()
 
     for mode in range(mode_min, mode_max):
-        nu = np.sqrt(np.abs(evals[mode])) * au2invcm
+        nu = np.abs(freqs[mode]) * au2invcm
         images[mode] = OrderedDict()
 
         if nu < FREQ_THRESH and nu > 0.0:
@@ -219,7 +217,7 @@ def calculate_displacements(atoms, hessian, npoints, mode_min=None,
     return images, mi
 
 
-def vib_population(hessian, h_evals, Bmatrix_inv, Dmatrix, internals, vibdof,
+def vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals, vibdof,
                    output='vib_pop.log'):
     '''
     Calculate the vibrational population analysis
@@ -228,8 +226,8 @@ def vib_population(hessian, h_evals, Bmatrix_inv, Dmatrix, internals, vibdof,
     ----------
     hessian : array_like
         Hessian matrix
-    h_evals : array_like
-        A vector of hessian eigenvalues
+    freqs : array_like
+        A vector of frequencies (square roots fof hessian eigenvalues)
     vibdof : int
         Number of vibrational degrees of freedom
     output : str
@@ -255,23 +253,23 @@ def vib_population(hessian, h_evals, Bmatrix_inv, Dmatrix, internals, vibdof,
     nu = np.multiply(Dmatrix.T, np.dot(Dmatrix.T, Fmatrix))
     nu[nu < 0.0] = 0.0
     # divide each column of nu by the hessian eigenvalues
-    nu = nu / h_evals[:, np.newaxis]
+    nu = nu / np.power(freqs[:, np.newaxis], 2.0)
 
     # sum over rows of nu to get the vibrational populations
     internal_types = np.unique(internals['type']).tolist()
     vibpop = np.zeros(ndof, dtype=list(zip(internal_types,
-                                [float] * len(internal_types))))
+                                       [float] * len(internal_types))))
 
     for inttype in internal_types:
         mask = internals['type'] == inttype
         vibpop[inttype] = np.sum(nu[:, mask], axis=1)
 
-    print_vib_pop(vibpop, h_evals, vibdof, output=output)
+    print_vib_pop(vibpop, freqs, vibdof, output=output)
 
     return vibpop
 
 
-def print_vib_pop(vibpop, evals, vibdof, output='vib_pop.log'):
+def print_vib_pop(vibpop, freqs, vibdof, output='vib_pop.log'):
     '''
     Print the vibrational population data
 
@@ -280,8 +278,8 @@ def print_vib_pop(vibpop, evals, vibdof, output='vib_pop.log'):
     vibpop : numpy.recarray
         Numpy structured array with the vibrational populations for
         stretches, bends, and torsions, per mode
-    h_evals : array_like
-        A vector of hessian eigenvalues
+    freqs : array_like
+        A vector of frequencies in atomic units
     vibdof : int
         Number of vibrational degrees of freedom
     output : str
@@ -298,7 +296,7 @@ def print_vib_pop(vibpop, evals, vibdof, output='vib_pop.log'):
             'stretch', 'bend', 'torsion'), file=fobj)
     for mode, row in enumerate(vibpop[:vibdof]):
         print('{0:5d} {1:>10.4f} {2:>8.2%} {3:>8.2%} {4:>8.2%}'.format(
-            mode + 1, np.sqrt(evals[mode]) * au2invcm, row['R'], row['A'],
+            mode + 1, freqs[mode] * au2invcm, row['R'], row['A'],
             row['T']), file=fobj)
 
     if output is not None:
