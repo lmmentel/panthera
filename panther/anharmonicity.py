@@ -8,7 +8,7 @@ import pandas as pd
 
 from scipy.constants import value, Boltzmann, Avogadro, Planck, gas_constant
 
-from .inputreader import print_mode_info
+from .inputreader import print_mode_thermo
 
 
 def factsqrt(m, n):
@@ -126,7 +126,7 @@ def get_hamiltonian(rank, freq, mass, coeffs):
     return Hamil
 
 
-def anharmonic_frequencies(atoms, T, coeffs, modeinfo, nvibdof):
+def anharmonic_frequencies(atoms, T, coeffs, modeinfo):
     '''
     Calculate the anharmonic frequencies
 
@@ -138,22 +138,18 @@ def anharmonic_frequencies(atoms, T, coeffs, modeinfo, nvibdof):
         Temperature in `K`
     coeffs : pandas.DataFrame
     modeinfo : pandas.DataFrame
-    nvibdof : int
-        Number of vibrational degrees of freedom
     '''
 
     MAXITER = 100
     QVIB_THRESH = 1.0e-8
     FREQ_THRESH = 1.0e-7
 
-    print('Number of vibrational DOF : {0:5d}'.format(nvibdof))
-
     au2joule = value('hartree-joule relationship')
     invcm2au = 100 * value('inverse meter-hartree relationship')
     kT = Boltzmann * T
 
     df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'converged', 'info', 'rank', 'type', 'd_qvib', 'd_nu'],
-                      index=pd.Index(np.arange(nvibdof), name='mode'), dtype=float)
+                      index=modeinfo[modeinfo['vibration']].index, dtype=float)
 
     for mode, row in coeffs.iterrows():
 
@@ -231,11 +227,11 @@ def merge_vibs(anh6, anh4, harmonic, verbose=False):
 
     if verbose:
         print('\n' + ' Thermochemistry per mode harmonic '.center(80, '='), end='\n\n')
-        print_mode_info(harmonic)
+        print_mode_thermo(harmonic)
         print('\n' + ' Thermochemistry per mode 6th order '.center(80, '='), end='\n\n')
-        print_mode_info(anh6)
+        print_mode_thermo(anh6)
         print('\n' + ' Thermochemistry per mode 4th order '.center(80, '='), end='\n\n')
-        print_mode_info(anh4)
+        print_mode_thermo(anh4)
 
     df = pd.DataFrame(columns=anh6.columns, index=anh6.index)
 
@@ -250,7 +246,7 @@ def merge_vibs(anh6, anh4, harmonic, verbose=False):
 
     if verbose:
         print('\n' + ' Final data to be used for thermochemistry '.center(80, '='), end='\n\n')
-        print_mode_info(df)
+        print_mode_thermo(df)
 
     return df
 
