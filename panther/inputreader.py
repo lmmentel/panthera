@@ -3,6 +3,8 @@
 Module providing functions for reading the input and other related files
 '''
 
+from __future__ import print_function, absolute_import, division
+
 import re
 import argparse
 import os
@@ -182,7 +184,39 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2au=True,
         raise ValueError('No hessian found in file: {}'.format(outcar))
 
 
-def print_mode_info(df):
+def print_modeinfo(mi, output=None):
+    '''
+    Print the vibrational population data
+
+    Parameters
+    ----------
+    mi : pandas.DataFrame
+    output : str
+        Name of the file to store the printout, if ``None`` stdout will be used
+    '''
+
+    if output is not None:
+        fobj = open(output, 'w')
+    else:
+        fobj = None
+
+    fmts = {
+        'HOfreq': '{:12.6f}'.format,
+        'effective_mass': '{:12.6f}'.format,
+        'displacement': '{:12.6f}'.format,
+        'P_stretch': '{:>8.2%}'.format,
+        'P_bend': '{:>8.2%}'.format,
+        'P_torsion': '{:>8.2%}'.format,
+        'P_longrange': '{:>8.2%}'.format,
+    }
+
+    print(mi[mi['vibration']].to_string(formatters=fmts), file=fobj)
+
+    if output is not None:
+        fobj.close()
+
+
+def print_mode_thermo(df, info=False):
     '''
     After calculating all the anharmonic modes print the per mode themochemical
     functions
@@ -202,12 +236,12 @@ def print_mode_info(df):
 
     print(df.to_string(formatters=fmts))
 
-    print('INFO codes')
-    print('-' * 10)
-    print('OK      : Succesfully converged the anharmonic eigenproblem')
-    print('AGTH    : Anharmonic frequency greater than the harmonic')
-    print('CE      : Convergence Error')
-    print('MAXITER : Maximum number of iterations exhausted')
+    if info:
+        print('INFO codes')
+        print('-' * 10)
+        print('OK      : Succesfully converged the anharmonic eigenproblem')
+        print('AGTH    : Anharmonic frequency greater than the harmonic')
+        print('MAXITER : Maximum number of iterations exhausted')
 
 
 def write_modes(filename='POSCARs'):
