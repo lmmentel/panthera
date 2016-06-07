@@ -22,7 +22,6 @@ def calculate_energies(images, calc, modes='all'):
     -------
     energies : pandas.DataFrame
         DataFrame with the energies per displacement
-
     '''
 
     if modes == 'all':
@@ -35,7 +34,7 @@ def calculate_energies(images, calc, modes='all'):
                    'got: {}'.format(type('modes')))
 
     ecols = ['E_' + str(i) for i in range(-4, 5)]
-    energies = pd.DataFrame(0.0, columns=ecols, index=range(12))
+    energies = pd.DataFrame(0.0, columns=ecols, index=pd.Index(modes, name='mode'))
 
     for mode in modes:
         for point in images[mode].keys():
@@ -138,3 +137,21 @@ def differentiate(displacements, energies, order=2):
         return np.dot(E, C) / np.power(displacements, 2)[:, np.newaxis]
     else:
         raise NotImplementedError('{} order derivatives not available'.format(order))
+
+
+def harmonic_potential(x, freq, mu):
+    '''
+    Calculate the harmonic potential
+
+    Parameters
+    ----------
+    x : float of numpy.array
+        Coordinate
+    mu : float
+        Reduced mass
+    freq : float
+        Frequency in cm^-1
+    '''
+
+    kconst = mu * (freq * 100.0 * value('inverse meter-hartree relationship'))**2
+    return 0.5 * kconst * x**2
