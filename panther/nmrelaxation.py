@@ -1,7 +1,7 @@
 
 import numpy as np
 
-from .vibrations import get_harmonic_vibrations
+from .vibrations import harmonic_vibrational_analysis
 
 
 def nmoptimize(atoms, hessian):
@@ -17,9 +17,10 @@ def nmoptimize(atoms, hessian):
 
 
     # calculate hessian eigenvalues and eigenvectors
-    evals, evecs = get_harmonic_vibrations(hessian, atoms,
+    evals, evecs = harmonic_vibrational_analysis(hessian, atoms,
                                            proj_translations=True,
-                                           proj_rotations=True)
+                                           proj_rotations=True,
+                                           ascomplex=False)
 
     mwevecs = np.dot(M_invsqrt, evecs)
 
