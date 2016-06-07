@@ -46,7 +46,7 @@ def plot_mode_legacy(mode, pes, coeff6, coeff4):
     plt.show()
 
 
-def plotmode(mode, energies, mi, c6o, c4o):
+def plotmode(mode, energies, mi, c6o, c4o, output=None):
     '''
     Plot a given mode
 
@@ -93,4 +93,8 @@ def plotmode(mode, energies, mi, c6o, c4o):
     plt.xlabel('$\Delta x$')
     plt.ylabel('$\Delta E$')
     plt.legend(loc='best', frameon=False)
-    plt.show()
+
+    if output is not None:
+        plt.savefig(output)
+    else:
+        plt.show()
