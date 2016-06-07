@@ -3,6 +3,7 @@ syntax: glob
 docs/build/**
 docs/source/_reference/**
 docs/source/generated/**
+ipynb/.ipynb_checkpoints/**
 .cache/**
 dist/**
 build/**
