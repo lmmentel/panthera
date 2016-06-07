@@ -8,6 +8,8 @@ from builtins import (bytes, str, open, super, range,
 import numpy as np
 from scipy.constants import value, pi, Avogadro, Planck, hbar, Boltzmann, gas_constant
 
+from .inputreader import get_symmetry_number
+
 
 def constraints2mask(atoms):
     '''
@@ -80,7 +82,7 @@ def get_total_mass(atoms):
         return np.sum(atoms.get_masses()[np.any(mask, axis=1)]) * atmass
 
 
-class Thermochemistry(object):
+class BaseThermochemistry(object):
 
     '''
     Thermochemistry the results will be in kJ/mol by default standard
@@ -90,14 +92,28 @@ class Thermochemistry(object):
     ----------
     atoms : ase.Atoms
         Atoms obect
-    system : dict
-        Dicitonary with the system specification
+    phase : str
+    pointgroup : str
+    symmetrynumber : int
     '''
 
-    def __init__(self, atoms, system):
+    def __init__(self, atoms, phase, pointgroup, symmetrynumber=None):
 
         self.atoms = atoms
-        self.system = system
+        self.phase = phase
+        self.pointgroup = pointgroup
+        self.symmetrynumber = symmetrynumber
+
+    @property
+    def symmetrynumber(self):
+        return self._symmetrynumber
+
+    @symmetrynumber.setter
+    def symmetrynumber(self, value):
+        if value is None:
+            self._symmetrynumber = get_symmetry_number(self.pointgroup)
+        else:
+            self._symmetrynumber = value
 
     def get_qrotational(self, T=273.15):
         '''
@@ -119,16 +135,16 @@ class Thermochemistry(object):
 
         '''
 
-        if self.system['phase'] == 'gas':
+        if self.phase == 'gas':
             # calculate the moments of ineria and convert them to [kg*m^2]
             atmass = value('atomic mass unit-kilogram relationship')
-            I = self.atoms.get_moments_of_inertia(vectors=False)*atmass*np.power(10.0, -20)
+            I = self.atoms.get_moments_of_inertia(vectors=False) * atmass * np.power(10.0, -20)
 
-            sigma = self.system['symmetrynumber']
-            if self.system['pointgroup'] in ['Coov', 'Dooh']:
+            sigma = self.symmetrynumber
+            if self.pointgroup in ['Coov', 'Dooh']:
                 return 2.0 * np.max(I) * Boltzmann * T / (sigma * hbar**2)
             else:
-                return np.sqrt(pi*np.product(I)*np.power(2.0*Boltzmann*T/hbar**2, 3))/sigma
+                return np.sqrt(pi * np.product(I) * np.power(2.0 * Boltzmann * T / hbar**2, 3)) / sigma
         else:
             return 0.0
 
@@ -155,7 +171,7 @@ class Thermochemistry(object):
 
         '''
 
-        if self.system['phase'] == 'gas':
+        if self.phase == 'gas':
 
             vol = gas_constant * T / (p * 1.0e6)
             totmass = get_total_mass(self.atoms)
@@ -174,7 +190,7 @@ class Thermochemistry(object):
             Temperature in `K`
         '''
 
-        if self.system['phase'] == 'gas':
+        if self.phase == 'gas':
             return 1.5 * gas_constant * T * 1.0e-3
         else:
             return 0.0
@@ -189,7 +205,7 @@ class Thermochemistry(object):
             Temperature in `K`
         '''
 
-        if self.system['phase'] == 'gas':
+        if self.phase == 'gas':
             qtrans = self.get_qtranslational(T)
             return gas_constant * (np.log(qtrans) + 2.5) * 1.0e-3
         else:
@@ -205,8 +221,8 @@ class Thermochemistry(object):
             Temperature in `K`
         '''
 
-        if self.system['phase'] == 'gas':
-            if self.system['pointgroup'] in ['Coov', 'Dooh']:
+        if self.phase == 'gas':
+            if self.pointgroup in ['Coov', 'Dooh']:
                 energy_rot = gas_constant * T * 1.0e-3
             else:
                 energy_rot = 1.5 * gas_constant * T * 1.0e-3
@@ -225,9 +241,9 @@ class Thermochemistry(object):
             Temperature in `K`
         '''
 
-        if self.system['phase'] == 'gas':
+        if self.phase == 'gas':
             qrot = self.get_qrotational(T)
-            if self.system['pointgroup'] in ['Coov', 'Dooh']:
+            if self.pointgroup in ['Coov', 'Dooh']:
                 entropy_rot = gas_constant * (np.log(qrot) + 1) * 1.0e-3
             else:
                 entropy_rot = gas_constant * (np.log(qrot) + 1.5) * 1.0e-3
@@ -235,6 +251,18 @@ class Thermochemistry(object):
             entropy_rot = 0.0
 
         return entropy_rot
+
+    def get_pv(self, T=273.15):
+        '''
+        Return the pV component of the enthalpy
+
+        Parameters
+        ----------
+        T : float
+            Temperature in `K`
+        '''
+
+        return Boltzmann * T * Avogadro * 1.0e-3
 
     def summary(self, T=273.15, p=0.1):
         '''
@@ -262,7 +290,7 @@ class Thermochemistry(object):
         print('{0:<25s} : {1:11.4f} kJ/mol'.format('S rotational', self.get_rotational_entropy(T)))
 
 
-class HarmonicThermo(Thermochemistry):
+class Thermochemistry(BaseThermochemistry):
     '''
     Calculate thermochemistry in harmonic approximation
 
@@ -272,13 +300,14 @@ class HarmonicThermo(Thermochemistry):
         Vibrational energies in Joules
     atoms : ase.Atoms
         Atoms obect
-    system : dict
-        Dicitonary with the system specification
+    phase : str
+    pointgroup : str
+    symmetrynumber : str
     '''
 
-    def __init__(self, vibenergies, atoms, system):
+    def __init__(self, vibenergies, atoms, *args, **kwargs):
 
-        super().__init__(atoms, system)
+        super().__init__(atoms, *args, **kwargs)
         self.vibenergies = vibenergies
 
     def get_zpve(self):
@@ -370,6 +399,57 @@ class HarmonicThermo(Thermochemistry):
         nlog = np.sum(np.log(1.0 - np.exp(-self.vibenergies / kT)))
         return 1.0e-3 * gas_constant * (frac - nlog)
 
+    def get_internal_energy(self, T=273.15):
+        '''
+        Return the internal energy U
+
+        Parameters
+        ----------
+        T : float
+            Temperature in `K`
+        '''
+
+        return self.get_translational_energy(T) + self.get_rotational_energy(T)\
+            + self.get_zpve() + self.get_vibrational_energy(T)
+
+    def get_enthalpy(self, T=273.15):
+        '''
+        Return the enthalpy H
+
+        Parameters
+        ----------
+        T : float
+            Temperature in `K`
+        '''
+
+        return self.get_internal_energy(T) + self.get_pv(T)
+
+    def get_entropy(self, T=273.15):
+        '''
+        Return the entropy S
+
+        Parameters
+        ----------
+        T : float
+            Temperature in `K`
+        '''
+
+        return self.get_translational_entropy(T)\
+            + self.get_rotational_entropy(T)\
+            + self.get_vibrational_entropy(T)
+
+    def get_heat_capacity(self, T=273.15):
+        '''
+        Return the heat capacity
+
+        Parameters
+        ----------
+        T : float
+            Temperature in `K`
+        '''
+
+        raise NotImplementedError
+
     def summary(self, T=273.15, p=0.1):
         '''
         Print summary with the thermochemical data at temperature `T` in kJ/mol
@@ -378,9 +458,11 @@ class HarmonicThermo(Thermochemistry):
         ----------
         T : float
             Temperature in `K`
+        p : float
+            Pressure in MPa
         '''
 
-        if self.system['phase'] == 'solid':
+        if self.phase == 'solid':
             lnqtrans = lnqrot = 0.0
         else:
             lnqtrans = np.log(self.get_qtranslational(T, p))
@@ -391,35 +473,47 @@ class HarmonicThermo(Thermochemistry):
         print('-' * 50)
 
         print('Partition functions:')
-        print('    {0:<20s} : {1:15.3f}'.format('ln qtranslational', lnqtrans))
-        print('    {0:<20s} : {1:15.3f}'.format('ln qrotational', lnqrot))
-        print('    {0:<20s} : {1:15.3f}'.format('ln qvibrational', self.get_qvibrational(T, uselog=True)))
+        print('{0:<24s} : {1:15.3f}'.format('ln q', lnqtrans + lnqrot + self.get_qvibrational(T, uselog=True)))
+        print('    {0:<20s} : {1:15.3f}'.format('ln q_translational', lnqtrans))
+        print('    {0:<20s} : {1:15.3f}'.format('ln q_rotational', lnqrot))
+        print('    {0:<20s} : {1:15.3f}'.format('ln q_vibrational', self.get_qvibrational(T, uselog=True)))
         print('-' * 50)
-        internal = self.get_translational_energy(T) + self.get_rotational_energy(T) + self.get_zpve() + self.get_vibrational_energy(T)
-        print('{0:<24s} : {1:15.3f}  kJ/mol'.format('Internal energy (U)', internal))
-        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format('U translational', self.get_translational_energy(T)))
-        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format('U rotational', self.get_rotational_energy(T)))
-        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format('U vibrational', self.get_zpve() + self.get_vibrational_energy(T)))
+
+        if self.phase == 'gas':
+            tfname = 'Enthalpy (H)'
+            tfunc = 'H'
+            tfvalue = self.get_enthalpy(T)
+        else:
+            tfname = 'Internal energy (U)'
+            tfunc = 'U'
+            tfvalue = self.get_internal_energy(T)
+
+        print('{0:<24s} : {1:15.3f}  kJ/mol'.format(tfname, tfvalue))
+        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format(tfunc + ' translational', self.get_translational_energy(T)))
+        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format(tfunc + ' rotational', self.get_rotational_energy(T)))
+        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format(tfunc + ' vibrational', self.get_zpve() + self.get_vibrational_energy(T)))
         print('        {0:<16s} : {1:15.3f}  kJ/mol'.format('@ 0 K (ZPVE)', self.get_zpve()))
         print('        {0:<16s} : {1:15.3f}  kJ/mol'.format('@ {0:6.2f} K'.format(T), self.get_vibrational_energy(T)))
+        if self.phase == 'gas':
+            print('        {0:<16s} : {1:15.3f}  kJ/mol'.format('pV', self.get_pv(T)))
         print('-' * 74)
-        entropy = self.get_translational_entropy(T) + self.get_rotational_entropy(T) + self.get_vibrational_entropy(T)
+
         St = self.get_translational_entropy(T)
         Sr = self.get_rotational_entropy(T)
         Sv = self.get_vibrational_entropy(T)
         print('*T'.rjust(65))
-        print('{0:<24s} : {1:16.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('Entropy (S)', entropy, T * entropy))
+        print('{0:<24s} : {1:16.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('Entropy (S)', self.get_entropy(T), T * self.get_entropy(T)))
         print('    {0:<20s} : {1:16.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('S translational', St, T * St))
         print('    {0:<20s} : {1:16.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('S rotational', Sr, T * Sr))
         print('    {0:<20s} : {1:16.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('S vibrational', Sv, T * Sv))
         print('-' * 74)
-        print('{0:<24s} : {1:16.4f} kJ/mol'.format('U - T*S', internal - T * entropy))
+        print('{0:<24s} : {1:16.4f} kJ/mol'.format(tfunc + ' - T*S', tfvalue - T * self.get_entropy(T)))
         print('-' * 50)
         elenergy = self.atoms.get_potential_energy() * value('electron volt') * 1.0e-3 * Avogadro
         print('{0:<24s} : {1:16.4f} kJ/mol'.format('Electronic energy', elenergy))
 
 
-class AnharmonicThermo(Thermochemistry):
+class AnharmonicThermo(BaseThermochemistry):
     '''
     Calculate thermochemistry in harmonic approximation
 
@@ -438,9 +532,9 @@ class AnharmonicThermo(Thermochemistry):
         Dicitonary with the system specification
     '''
 
-    def __init__(self, df, atoms, system):
+    def __init__(self, df, atoms, *args, **kwargs):
 
-        super().__init__(atoms, system)
+        super().__init__(atoms, *args, **kwargs)
         self.df = df
 
     def get_zpve(self):
@@ -479,6 +573,45 @@ class AnharmonicThermo(Thermochemistry):
 
         return self.df.S.sum()
 
+    def get_internal_energy(self, T=273.15):
+        '''
+        Return the internal energy U
+
+        Parameters
+        ----------
+        T : float
+            Temperature in `K`
+        '''
+
+        return self.get_translational_energy(T) + self.get_rotational_energy(T)\
+            + self.get_zpve() + self.get_vibrational_energy()
+
+    def get_enthalpy(self, T=273.15):
+        '''
+        Return the enthalpy H
+
+        Parameters
+        ----------
+        T : float
+            Temperature in `K`
+        '''
+
+        return self.get_internal_energy(T) + self.get_pv(T)
+
+    def get_entropy(self, T=273.15):
+        '''
+        Return the entropy S
+
+        Parameters
+        ----------
+        T : float
+            Temperature in `K`
+        '''
+
+        return self.get_translational_entropy(T)\
+            + self.get_rotational_entropy(T)\
+            + self.get_vibrational_entropy()
+
     def summary(self, T=273.15, p=0.1):
         '''
         Print summary with the thermochemical data at temperature `T` in kJ/mol
@@ -489,7 +622,7 @@ class AnharmonicThermo(Thermochemistry):
             Temperature in `K`
         '''
 
-        if self.system['phase'] == 'solid':
+        if self.phase == 'solid':
             lnqtrans = lnqrot = 0.0
         else:
             lnqtrans = np.log(self.get_qtranslational(T, p))
@@ -500,20 +633,32 @@ class AnharmonicThermo(Thermochemistry):
         print('-' * 50)
 
         print('Partition functions:')
+        print('{0:<24s} : {1:15.3f}'.format('ln q', lnqtrans + lnqrot + self.get_qvibrational(uselog=True)))
         print('    {0:<20s} : {1:15.3f}'.format('ln qtranslational', lnqtrans))
         print('    {0:<20s} : {1:15.3f}'.format('ln qrotational', lnqrot))
         print('    {0:<20s} : {1:15.3f}'.format('ln qvibrational', self.get_qvibrational(uselog=True)))
         print('-' * 50)
-        internal = self.get_translational_energy(T) + self.get_rotational_energy(T)\
-                 + self.get_zpve() + self.get_vibrational_energy()
-        print('{0:<24s} : {1:15.3f}  kJ/mol'.format('Internal energy (U)', internal))
-        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format('U translational', self.get_translational_energy(T)))
-        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format('U rotational', self.get_rotational_energy(T)))
-        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format('U vibrational', self.get_zpve() + self.get_vibrational_energy()))
+
+        if self.phase == 'gas':
+            tfname = 'Enthalpy (H)'
+            tfunc = 'H'
+            tfvalue = self.get_enthalpy(T)
+        else:
+            tfname = 'Internal energy (U)'
+            tfunc = 'U'
+            tfvalue = self.get_internal_energy(T)
+
+        print('{0:<24s} : {1:15.3f}  kJ/mol'.format(tfname, tfvalue))
+        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format(tfunc + ' translational', self.get_translational_energy(T)))
+        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format(tfunc + ' rotational', self.get_rotational_energy(T)))
+        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format(tfunc + ' vibrational', self.get_zpve() + self.get_vibrational_energy()))
         print('        {0:<16s} : {1:15.3f}  kJ/mol'.format('@ 0 K (ZPVE)', self.get_zpve()))
         print('        {0:<16s} : {1:15.3f}  kJ/mol'.format('@ {0:6.2f} K'.format(T), self.get_vibrational_energy()))
+        if self.phase == 'gas':
+            print('        {0:<16s} : {1:15.3f}  kJ/mol'.format('pV', self.get_pv(T)))
         print('-' * 74)
-        entropy = self.get_translational_entropy(T) + self.get_rotational_entropy(T) + self.get_vibrational_entropy()
+
+        entropy = self.get_entropy(T)
         St = self.get_translational_entropy(T)
         Sr = self.get_rotational_entropy(T)
         Sv = self.get_vibrational_entropy()
@@ -523,7 +668,7 @@ class AnharmonicThermo(Thermochemistry):
         print('    {0:<20s} : {1:16.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('S rotational', Sr, T * Sr))
         print('    {0:<20s} : {1:16.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('S vibrational', Sv, T * Sv))
         print('-' * 74)
-        print('{0:<24s} : {1:16.4f} kJ/mol'.format('U - T*S', internal - T * entropy))
+        print('{0:<24s} : {1:16.4f} kJ/mol'.format(tfunc + ' - T*S', tfvalue - T * entropy))
         print('-' * 50)
         elenergy = self.atoms.get_potential_energy() * value('electron volt') * 1.0e-3 * Avogadro
         print('{0:<24s} : {1:16.4f} kJ/mol'.format('Electronic energy', elenergy))
