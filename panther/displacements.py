@@ -10,16 +10,36 @@ from collections import OrderedDict
 
 from writeBmat import get_internals
 
+from .inputreader import print_modeinfo
+
 FREQ_THRESH = 1.0e6
 DISPNORM_THRESH = 1.0e-2
 CARTDISP_THRESH = 1.0e-6
 
 
-def get_nvibdof(atoms, job, system):
-    'Calculate the number of vibrational degrees of freedom'
+def get_nvibdof(atoms, job, system, include_constr=False):
+    '''
+    Calculate the number of vibrational degrees of freedom
+
+    Parameters
+    ----------
+    atoms : ase.Atoms
+    job : dict
+    system : dict
+    include_constr : bool
+        If ``True`` the constraints will be included
+
+    Returns
+    -------
+    nvibdof : float
+        Number of vibrational degrees of freedom
+    '''
 
     # get the total number of degrees of freedom
-    ndof = 3 * (len(atoms) - len(atoms.constraints))
+    if include_constr:
+        ndof = 3 * (len(atoms) - len(atoms.constraints))
+    else:
+        ndof = 3 * len(atoms)
 
     extradof = 0
     if system['phase'].lower() == 'gas':
@@ -38,7 +58,7 @@ def get_nvibdof(atoms, job, system):
     return ndof - extradof
 
 
-def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints,
+def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
                             mode_min=None, mode_max=None, verbose=False):
     '''
     Calculate displacements in internal coordinates
@@ -70,7 +90,7 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints,
         keys, where point is a number from -4, -3, -2, -1, 1, 2, 3, 4
     mi : pandas.DataFrame
         DataFrame with per mode characteristics, displacements, masses
-        and a flag to mark it a mode is a stretching mode or not
+        and vibrational population analysis
     '''
 
     ang2bohr = angstrom / value('atomic unit of length')
@@ -108,22 +128,23 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints,
     Gmatrix = np.dot(Bmatrix, np.dot(M_inv, Bmatrix.T))
     Gmatrix_inv = np.linalg.pinv(Gmatrix)
 
-    vibdof = np.count_nonzero(freqs)
-
     mwevecs = np.dot(M_invsqrt, normal_modes)
 
     Bmatrix_inv = np.dot(M_inv, np.dot(Bmatrix.T, Gmatrix_inv))
 
     Dmatrix = np.dot(Bmatrix, mwevecs)
 
-    vibpop = vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals,
-                            vibdof)
-
     # DataFrame with mode data
     mi = pd.DataFrame(index=pd.Index(data=range(ndof), name='mode'),
-                      columns=['effective_mass', 'displacement', 'is_stretch'])
+                      columns=['HOfreq', 'effective_mass', 'displacement',
+                               'is_stretch', 'vibration'])
 
-    mi['is_stretch'] = vibpop['R'] > 0.9
+    mi['HOfreq'] = freqs * au2invcm
+    mi['vibration'] = (mi.HOfreq != 0.0) & (mi.HOfreq.notnull())
+
+    mi = vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals, mi)
+
+    mi['is_stretch'] = mi['P_stretch'] > 0.9
     mi['effective_mass'] = 1.0 / np.einsum('ij,ji->i', mwevecs.T, mwevecs)
 
     # calculate the megnitude of the displacement for all the modes
@@ -133,6 +154,10 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints,
                         np.abs(freqs[~mi['is_stretch'].values]))
     mi['displacement'] = mi['displacement'] / (npoints * 2.0)
     mi.to_pickle('modeinfo.pkl')
+
+    if verbose:
+        print_modeinfo(mi)
+
 
     images = OrderedDict()
 
@@ -217,8 +242,7 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints,
     return images, mi
 
 
-def vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals, vibdof,
-                   output='vib_pop.log'):
+def vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals, mi):
     '''
     Calculate the vibrational population analysis
 
@@ -228,19 +252,21 @@ def vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals, vibdof,
         Hessian matrix
     freqs : array_like
         A vector of frequencies (square roots fof hessian eigenvalues)
-    vibdof : int
-        Number of vibrational degrees of freedom
-    output : str
-        Name of the file to store the results
+    Bmatrix_inv : array_like
+        Inverse of the B matrix
+    Dmatrix : array_like
+        D matrix
+    internals : array_like
+        Structured array with internal coordinates
+    mi : pandas.DataFrame
+        Modeinfo
 
     Returns
     -------
-    vibpop : numpy array
-        Numpy structured array with the vibrational populations for
-        stretches, bends, and torsions, per mode
+    mi : pandas.DataFrame
+        Modeinfo DataFrame updated with columns with vibrational
+        population analysis results
     '''
-
-    nint, ndof = Dmatrix.shape
 
     # Wilson F matrix
     Fmatrix = np.dot(Bmatrix_inv.T, np.dot(hessian, Bmatrix_inv))
@@ -248,56 +274,21 @@ def vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals, vibdof,
     # norm of |Fmatrix - Fbcktr| can be used to check the accuracy of
     # the transformation Fbcktr = np.dot(Bmatrix.T, np.dot(Fmatrix, Bmatrix))
 
-    # construct the nu matrix with poppulation contributions from
+    # construct the nu matrix with population contributions from
     # internal coordinates to cartesians
     nu = np.multiply(Dmatrix.T, np.dot(Dmatrix.T, Fmatrix))
     nu[nu < 0.0] = 0.0
     # divide each column of nu by the hessian eigenvalues
     nu = nu / np.power(freqs[:, np.newaxis], 2.0)
 
-    # sum over rows of nu to get the vibrational populations
-    internal_types = np.unique(internals['type']).tolist()
-    vibpop = np.zeros(ndof, dtype=list(zip(internal_types,
-                                       [float] * len(internal_types))))
+    icnames = [('R', 'P_stretch'), ('A', 'P_bend'), ('T', 'P_torsion'),
+               ('IR1', 'P_longrange')]
 
-    for inttype in internal_types:
-        mask = internals['type'] == inttype
-        vibpop[inttype] = np.sum(nu[:, mask], axis=1)
+    for iname, cname in icnames:
+        mi.loc[:, cname] = 0.0
+        if iname in internals['type'].tolist():
+            mask = internals['type'] == iname
+            # sum over rows of nu to get the vibrational populations
+            mi.loc[:, cname] = np.sum(nu[:, mask], axis=1)
 
-    print_vib_pop(vibpop, freqs, vibdof, output=output)
-
-    return vibpop
-
-
-def print_vib_pop(vibpop, freqs, vibdof, output='vib_pop.log'):
-    '''
-    Print the vibrational population data
-
-    Parameters
-    ----------
-    vibpop : numpy.recarray
-        Numpy structured array with the vibrational populations for
-        stretches, bends, and torsions, per mode
-    freqs : array_like
-        A vector of frequencies in atomic units
-    vibdof : int
-        Number of vibrational degrees of freedom
-    output : str
-        Name of the file to store the printout, if ``None`` stdout will be
-        used
-    '''
-
-    au2invcm = 0.01 * value('hartree-inverse meter relationship')
-
-    if output is not None:
-        fobj = open(output, 'w')
-
-    print('{0:^5s} {1:^10s} {2:^8s} {3:^8s} {4:^8s}'.format('mode', 'omega',
-            'stretch', 'bend', 'torsion'), file=fobj)
-    for mode, row in enumerate(vibpop[:vibdof]):
-        print('{0:5d} {1:>10.4f} {2:>8.2%} {3:>8.2%} {4:>8.2%}'.format(
-            mode + 1, freqs[mode] * au2invcm, row['R'], row['A'],
-            row['T']), file=fobj)
-
-    if output is not None:
-        fobj.close()
+    return mi
