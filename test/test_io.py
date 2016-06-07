@@ -13,9 +13,9 @@ cwd = os.path.abspath(os.path.dirname(__file__))
 def test_read_vasp_hessian_meoh():
 
     # the hessian is in the same form as in the OUCAR file
-    refhessian = np.load(os.path.join(cwd, 'data/meoh_hessian.npy'))
+    refhessian = np.load(os.path.join(cwd, 'data/meoh_hessian_raw.npy'))
 
-    outcar = os.path.join(cwd, 'data/meoh.OUTCAR')
+    outcar = os.path.join(cwd, 'data/meoh_hessian.OUTCAR')
 
     # as stored in OUTCAR
     hessian = read_vasp_hessian(outcar, symmetrize=False,

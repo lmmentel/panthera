@@ -17,7 +17,7 @@ cwd = os.path.abspath(os.path.dirname(__file__))
 def test_harmonic_methanol():
 
     # the hessian is in the same form as in the OUCAR file
-    hessian = np.load(os.path.join(cwd, 'data/meoh_hessian.npy'))
+    hessian = np.load(os.path.join(cwd, 'data/meoh_hessian_raw.npy'))
     hessian = (hessian + hessian.T) * 0.5
     hessian = hessian * ev2hartree / (ang2bohr**2)
     hessian = -1 * hessian
