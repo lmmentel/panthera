@@ -2,6 +2,7 @@ syntax: glob
 # do not keep build directory created by foray under version control
 docs/build/**
 docs/source/_reference/**
+docs/source/generated/**
 .cache/**
 dist/**
 build/**
