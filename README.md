@@ -22,4 +22,17 @@ pip install -U [--user] ./panther
 
 ## Documentation
 
-The documentatioan can be at [panther.readthedocs.org](http://panther.readthedocs.org).
+The documentatioan can be at [panther.rtfd.io](http://panther.rtfd.io).
+
+## Citing
+
+If you use *panther* in a scientific publication, please cite the software as
+
+|    L. M. Mentel, *panther* - Package for Anharmonic Thermochemistry, 2016. Available at: [https://bitbucket.org/lukaszmentel/panther](https://bitbucket.org/lukaszmentel/mendeleev)
+
+
+## Funding
+
+This project is supported by the RCN (The Research Council of Norway) project
+number 239193.
+
