@@ -12,10 +12,9 @@ Thermochemistry
 
 .. currentmodule:: panther.thermochemistry
 
-.. autosummary::
-   :toctree: generated/
+.. autoclass:: panther.thermochemistry.Thermochemistry
+   :members:
 
-   Thermochemistry
 
 panther.anharmonicity
 =====================
