@@ -1,10 +1,14 @@
 
 import argparse
 import os
-from .inputreader import read_em_freq, read_pes
+from .inputreader import read_em_freq, read_pes, write_modes
+from .plotting import plotmode, plotmode_legacy
 
 
 def plotmode_cli():
+    '''
+    CLI interace for the plotting functions
+    '''
 
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', type=int, help='number of the mode to be printed')
@@ -14,6 +18,9 @@ def plotmode_cli():
                         help='file with fourth order polynomial fit, default="em_freq_4th"')
     parser.add_argument('-p', '--pes', default='test_anharm',
                         help='file with the potential energy surface (PES), default="test_anharm"')
+    parser.add_argument('-o', '--output',
+                        help='name of the output file')
+
     args = parser.parse_args()
 
     if os.path.exists(args.sixth):
@@ -32,7 +39,7 @@ def plotmode_cli():
     if args.mode > max(pes.keys()):
         raise ValueError('Mode number {} unavailable, max mode number is: {}'.format(args.mode, max(pes.keys())))
 
-    plot_mode(args.mode, pes, coeff6, coeff4)
+    plotmode_legacy(args.mode, pes, coeff6, coeff4, args.output)
 
 
 def write_modes_cli():

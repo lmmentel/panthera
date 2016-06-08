@@ -3,7 +3,7 @@ User guide
 
 Available CLI programs:
 
-    - :ref:`panther-label` format conversion, calcualtion of harmonic and anharmonic frequencies
+    - :ref:`panther-label` format conversion, calculation of harmonic and anharmonic frequencies
     - :ref:`plotmode-label` visualiztion of vibrational potential per mode
     - :ref:`writemodes-label` conversion of geometry files to collections of modes
 
@@ -95,11 +95,11 @@ plotmode
 
    $ plotmode -h
 
-   usage: plotmode [-h] [-s SIXTH] [-f FOURTH] [-p PES] mode
-
+   usage: plotmode [-h] [-s SIXTH] [-f FOURTH] [-p PES] [-o OUTPUT] mode
+   
    positional arguments:
      mode                  number of the mode to be printed
-
+   
    optional arguments:
      -h, --help            show this help message and exit
      -s SIXTH, --sixth SIXTH
@@ -110,20 +110,21 @@ plotmode
                            default="em_freq_4th"
      -p PES, --pes PES     file with the potential energy surface (PES),
                            default="test_anharm"
-
+     -o OUTPUT, --output OUTPUT
+                           name of the output file
 
 
 Example
 ^^^^^^^
 
 Provided that the default files ``em_freq``, ``em_freq_4th`` and ``test_anharm`` are present
-to plot the first mode only requires the argument ``1``
+to plot the last mode only requires the argument ``12``
 
 .. code-block:: bash
 
-   plotmode 1
+   plotmode 12
 
-.. image:: gfx/mode1-potential.png
+.. image:: gfx/meoh_mode_12.png
     :width: 800px
     :align: center
     :alt: Plot of the mode potential

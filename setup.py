@@ -17,7 +17,7 @@ setup(
     entry_points = {
         'console_scripts' : [
             'panther = panther.panther:main',
-            'plotmode = panther.cli:plot_mode_cli',
+            'plotmode = panther.cli:plotmode_cli',
             'writemodes = panther.cli:write_modes_cli',
         ]
     },

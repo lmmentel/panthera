@@ -244,35 +244,6 @@ def print_mode_thermo(df, info=False):
         print('MAXITER : Maximum number of iterations exhausted')
 
 
-def write_modes(filename='POSCARs'):
-    '''
-    Convert a file with multiple geometries representing vibrational modes
-    in ``POSCAR``/``CONTCAR`` format into trajectory files with modes.
-    '''
-
-    pat = re.compile(r'Mode\s*=\s*(\d+)\s*point\s*=\s*(-?\d+)')
-
-    if os.path.exists(filename):
-        with open(filename, 'r') as fdata:
-            poscars = fdata.read()
-    else:
-        raise OSError('File "{}" does not exist'.format(filename))
-
-    parsed = [x for x in pat.split(poscars) if x != ' ']
-
-    it = iter(parsed)
-    dd = defaultdict(list)
-    for i, j, item in zip(it, it, it):
-        dd[i].append(item)
-
-    for mode, geometries in dd.items():
-        traj = Trajectory('mode.{}.traj'.format(mode), 'w')
-        for geometry in geometries:
-            atoms = read_vasp(io.StringIO(geometry))
-            traj.write(atoms)
-        traj.close()
-
-
 # parsers and write methods for legacy EIGEN_HESS files
 
 def read_bmatdat():
@@ -341,7 +312,7 @@ def read_pes(fname):
     pat = re.compile(' Scan along mode # =\s*(\d+)')
     parsed = [x for x in pat.split(data) if x != '']
     it = iter(parsed)
-    parsed = {int(mode): np.loadtxt(io.StringIO(pes)) for mode, pes in zip(it, it)}
+    parsed = {int(mode): np.loadtxt(io.StringIO(unicode(pes))) for mode, pes in zip(it, it)}
     return parsed
 
 
@@ -408,3 +379,32 @@ def write_internal(atoms, hessian, job):
 
     print('wrote file: "{}" with the data in internal format'.format(
         job['internal_fname']))
+
+
+def write_modes(filename='POSCARs'):
+    '''
+    Convert a file with multiple geometries representing vibrational modes
+    in ``POSCAR``/``CONTCAR`` format into trajectory files with modes.
+    '''
+
+    pat = re.compile(r'Mode\s*=\s*(\d+)\s*point\s*=\s*(-?\d+)')
+
+    if os.path.exists(filename):
+        with open(filename, 'r') as fdata:
+            poscars = fdata.read()
+    else:
+        raise OSError('File "{}" does not exist'.format(filename))
+
+    parsed = [x for x in pat.split(poscars) if x != ' ']
+
+    it = iter(parsed)
+    dd = defaultdict(list)
+    for i, j, item in zip(it, it, it):
+        dd[i].append(item)
+
+    for mode, geometries in dd.items():
+        traj = Trajectory('mode.{}.traj'.format(mode), 'w')
+        for geometry in geometries:
+            atoms = read_vasp(io.StringIO(unicode(geometry)))
+            traj.write(atoms)
+        traj.close()
