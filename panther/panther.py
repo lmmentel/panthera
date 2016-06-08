@@ -12,9 +12,9 @@ import numpy as np
 from ase.io.vasp import read_vasp_out
 
 from .inputreader import parse_arguments, read_vasp_hessian, write_internal
-from .vibrations import get_harmonic_vibrations
+from .vibrations import harmonic_vibrational_analysis
 from .anharmonicity import anharmonic_frequencies, merge_vibs
-from .thermochemistry import HarmonicThermo, AnharmonicThermo
+from .thermochemistry import Thermochemistry, AnharmonicThermo
 
 
 def temperature_range(conditions):
@@ -71,11 +71,11 @@ def main():
         else:
             raise NotImplementedError('Code {} is not supported yet.'.format(job['code']))
 
-        freqs, normal_modes = get_harmonic_vibrations(hessian, atoms,
-                                                      job['proj_translations'],
-                                                      job['proj_rotations'])
+        freqs, normal_modes = harmonic_vibrational_analysis(hessian, atoms,
+                                                            job['proj_translations'],
+                                                            job['proj_rotations'])
 
-        freqs = 0.01 * value('hartree-inverse meter relationship') * freqs.astype(complex)**0.5
+        freqs = 0.01 * value('hartree-inverse meter relationship') * freqs
 
         # save the result
         print('INFO: Saving vibrational frequencies to: frequencies.npy')
@@ -92,7 +92,7 @@ def main():
         vibenergies = Planck * freqs.real * 100.0 * value('inverse meter-hertz relationship')
         vibenergies = vibenergies[vibenergies > 0.0]
 
-        thermo = HarmonicThermo(vibenergies, atoms, conditions, system)
+        thermo = Thermochemistry(vibenergies, atoms, system)
 
         for temp in temperature_range(conditions):
 
