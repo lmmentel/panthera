@@ -26,7 +26,7 @@ setup(
     name = 'panther',
     packages = ['panther'],
     url = 'https://bitbucket.org/lukaszmentel/panther/',
-    version = '0.3.0',
+    version = '0.3.1',
     classifiers = [
         'Environment :: Console',
         'Operating System :: POSIX :: Linux',
