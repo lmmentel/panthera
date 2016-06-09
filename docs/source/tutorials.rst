@@ -290,7 +290,7 @@ The last this is to fit the potential energy surfaces as 6th and 4th order polyn
    from panther.pes import fit_potentials
 
    # fit the potentials on 6th and 4th order polynomials
-   c6o, c4o = fit_potentials(mi, energies)
+   c6o, c4o = fit_potentials(modeinfo, energies)
 
 The two DataFrame_ objects ``c6o`` and ``c4o`` contain fitted polynomial coefficients for each
 mode. We can use the energies and the polynomial coefficients to plot the PES and the fitted
