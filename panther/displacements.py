@@ -85,8 +85,8 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
 
     Returns
     -------
-    images : dict
-        A dictionary with the structures with tuples of (mode, point) as
+    images : dict of dicts
+        A nested (ordred) dictionary with the structures with mode, point as
         keys, where point is a number from -4, -3, -2, -1, 1, 2, 3, 4
     mi : pandas.DataFrame
         DataFrame with per mode characteristics, displacements, masses
