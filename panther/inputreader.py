@@ -10,6 +10,7 @@ import argparse
 import os
 import sys
 import io
+import six
 
 from collections import defaultdict, OrderedDict
 
@@ -312,7 +313,7 @@ def read_pes(fname):
     pat = re.compile(' Scan along mode # =\s*(\d+)')
     parsed = [x for x in pat.split(data) if x != '']
     it = iter(parsed)
-    parsed = {int(mode): np.loadtxt(io.StringIO(unicode(pes))) for mode, pes in zip(it, it)}
+    parsed = {int(mode): np.loadtxt(io.StringIO(six.text_type(pes))) for mode, pes in zip(it, it)}
     return parsed
 
 
@@ -335,7 +336,7 @@ def read_poscars(filename):
 
     it = iter(parsed)
     for mode, point, geometry in zip(it, it, it):
-        images[tuple([int(mode) -1, int(point)])] = read_vasp(io.StringIO(unicode(geometry)))
+        images[tuple([int(mode) -1, int(point)])] = read_vasp(io.StringIO(six.text_type(geometry)))
     return images
 
 
@@ -405,6 +406,6 @@ def write_modes(filename='POSCARs'):
     for mode, geometries in dd.items():
         traj = Trajectory('mode.{}.traj'.format(mode), 'w')
         for geometry in geometries:
-            atoms = read_vasp(io.StringIO(unicode(geometry)))
+            atoms = read_vasp(io.StringIO(six.text_type(geometry)))
             traj.write(atoms)
         traj.close()
