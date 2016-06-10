@@ -7,10 +7,12 @@ import numpy as np
 import pandas as pd
 from scipy.constants import angstrom, pi, value
 from collections import OrderedDict
+from six import string_types
 
 from writeBmat import get_internals
 
 from .inputreader import print_modeinfo
+from .pes import expandrange
 
 FREQ_THRESH = 1.0e6
 DISPNORM_THRESH = 1.0e-2
@@ -59,7 +61,7 @@ def get_nvibdof(atoms, job, system, include_constr=False):
 
 
 def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
-                            mode_min=None, mode_max=None, verbose=False):
+                            modes='all', verbose=False):
     '''
     Calculate displacements in internal coordinates
 
@@ -76,10 +78,8 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
     npoints : int
         Number of points to displace structure, the code will calculate
         ``2*npoints`` displacements since + and - directions are taken
-    mode_min : int
-        Smallest mode number
-    mode_max : int
-        Largest mode number
+    modes : str or list/tuple of ints, default 'all'
+        Range of the modes for which the displacements will be calculated
     verbose : bool
         If ``True`` additional debug information is printed to stdout
 
@@ -101,12 +101,6 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
     ndof = 3 * natoms
     masses = atoms.get_masses()
     pos = atoms.get_positions()
-
-    if mode_min is None:
-        mode_min = 0
-
-    if mode_max is None:
-        mode_max = ndof
 
     coords = pos.ravel() * ang2bohr
 
@@ -158,10 +152,20 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
     if verbose:
         print_modeinfo(mi)
 
+    if isinstance(modes, string_types):
+        if modes.lower() in ['all', ':']:
+            modes = mi[mi['vibration']].index.values
+        else:
+            modes = expandrange(modes)
+    elif isinstance(modes, (list, tuple)):
+        pass
+    else:
+        ValueError('<modes> should be a str, list or tuple '
+                   'got: {}'.format(type('modes')))
 
     images = OrderedDict()
 
-    for mode in range(mode_min, mode_max):
+    for mode in modes:
         nu = np.abs(freqs[mode]) * au2invcm
         images[mode] = OrderedDict()
 
