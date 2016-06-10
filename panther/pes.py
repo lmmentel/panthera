@@ -4,6 +4,33 @@ from __future__ import print_function
 import numpy as np
 import pandas as pd
 from scipy.constants import value
+from six import string_types
+
+
+def expandrange(modestr):
+    '''
+    Convert a comma separated string of indices and dash separated ranges into
+    a list of integer indices
+
+    Parameters
+    ----------
+    modestr : str
+
+    Returns
+    -------
+    indices : list of ints
+
+    Examples
+    --------
+
+    >>> from panther.pes import expandrange
+    >>> s = "2,3,5-10,20,25-30"
+    >>> expandrange(s)
+    [2, 3, 5, 6, 7, 8, 9, 10, 20, 25, 26, 27, 28, 29, 30]
+    '''
+
+    ranges = (x.split("-") for x in modestr.split(","))
+    return [i for r in ranges for i in range(int(r[0]), int(r[-1]) + 1)]
 
 
 def calculate_energies(images, calc, modes='all'):
@@ -24,17 +51,20 @@ def calculate_energies(images, calc, modes='all'):
         DataFrame with the energies per displacement
     '''
 
-    if modes == 'all':
-        nmodes = len(images)
-        modes = range(nmodes)
+    if isinstance(modes, string_types):
+        if modes.lower() in ['all', ':']:
+            modes = range(len(images))
+        else:
+            modes = expandrange(modes)
     elif isinstance(modes, (list, tuple)):
-        nmodes = len(modes)
+        pass
     else:
         ValueError('<modes> should be a str, list or tuple '
                    'got: {}'.format(type('modes')))
 
     ecols = ['E_' + str(i) for i in range(-4, 5)]
-    energies = pd.DataFrame(0.0, columns=ecols, index=pd.Index(modes, name='mode'))
+    energies = pd.DataFrame(0.0, columns=ecols, index=pd.Index(modes,
+                            name='mode'))
 
     for mode in modes:
         for point in images[mode].keys():
