@@ -16,9 +16,9 @@ ev2hartree = value('electron volt-hartree relationship')
 cwd = os.path.abspath(os.path.dirname(__file__))
 
 
-def test_displacements_meoh(tmpdir):
+def test_displacements_meoh():#tmpdir):
 
-    tmpdir.chdir()
+    #tmpdir.chdir()
 
     meoh = ase.io.read(os.path.join(cwd, 'data', 'meoh.traj'))
 
@@ -29,7 +29,7 @@ def test_displacements_meoh(tmpdir):
     hessian = -1 * hessian
 
     freqs, normal_modes = harmonic_vibrational_analysis(hessian, meoh, proj_translations=True,
-        proj_rotations=True, ascomplex=True)
+        proj_rotations=True, ascomplex=False)
 
     with open(os.path.join(cwd, 'data', 'meoh_images.pkl'), 'r') as fpkl:
         refimages = pickle.load(fpkl)
