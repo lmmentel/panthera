@@ -1,6 +1,7 @@
 ase
 numpy
+numpydoc
 pandas
 scipy
+six
 future
-numpydoc
