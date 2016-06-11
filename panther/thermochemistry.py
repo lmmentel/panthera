@@ -491,7 +491,7 @@ class Thermochemistry(BaseThermochemistry):
         '''
 
         return self.get_translational_heat_capacity()\
-            + self.get_translational_heat_capacity()\
+            + self.get_rotational_heat_capacity()\
             + self.get_vibrational_heat_capacity(T)
 
     def summary(self, T=273.15, p=0.1):
@@ -512,16 +512,21 @@ class Thermochemistry(BaseThermochemistry):
             lnqtrans = np.log(self.get_qtranslational(T, p))
             lnqrot = np.log(self.get_qrotational(T))
 
-        print('\n' + ' THERMOCHEMISTRY '.center(50, '='), end='\n\n')
+        print('\n' + ' THERMOCHEMISTRY '.center(52, '='), end='\n\n')
         print('\t @ T = {0:6.2f} K\t p = {1:6.2f} MPa'.format(T, p), end='\n\n')
-        print('-' * 50)
+        print('-' * 52)
 
-        print('Partition functions:')
-        print('{0:<24s} : {1:15.3f}'.format('ln q', lnqtrans + lnqrot + self.get_qvibrational(T, uselog=True)))
-        print('    {0:<20s} : {1:15.3f}'.format('ln q_translational', lnqtrans))
-        print('    {0:<20s} : {1:15.3f}'.format('ln q_rotational', lnqrot))
-        print('    {0:<20s} : {1:15.3f}'.format('ln q_vibrational', self.get_qvibrational(T, uselog=True)))
-        print('-' * 50)
+        print('{0:<25s} : {1:14.3f}'.format('Partition function (ln q)', lnqtrans + lnqrot + self.get_qvibrational(T, uselog=True)))
+        print('    {0:<21s} : {1:14.3f}'.format('ln q_translational', lnqtrans))
+        print('    {0:<21s} : {1:14.3f}'.format('ln q_rotational', lnqrot))
+        print('    {0:<21s} : {1:14.3f}'.format('ln q_vibrational', self.get_qvibrational(T, uselog=True)))
+        print('-' * 52)
+
+        print('{0:<25s} : {1:14.3f}  kJ/mol*K'.format('Heat capacity (C_p)', self.get_heat_capacity(T)))
+        print('    {0:<21s} : {1:14.3f}  kJ/mol*K'.format('C_p translational', self.get_translational_heat_capacity()))
+        print('    {0:<21s} : {1:14.3f}  kJ/mol*K'.format('C_p rotational', self.get_rotational_heat_capacity()))
+        print('    {0:<21s} : {1:14.3f}  kJ/mol*K'.format('C_p vibrational', self.get_vibrational_heat_capacity(T)))
+        print('-' * 52)
 
         if self.phase == 'gas':
             tfname = 'Enthalpy (H)'
@@ -532,29 +537,32 @@ class Thermochemistry(BaseThermochemistry):
             tfunc = 'U'
             tfvalue = self.get_internal_energy(T)
 
-        print('{0:<24s} : {1:15.3f}  kJ/mol'.format(tfname, tfvalue))
-        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format(tfunc + ' translational', self.get_translational_energy(T)))
-        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format(tfunc + ' rotational', self.get_rotational_energy(T)))
-        print('    {0:<20s} : {1:15.3f}  kJ/mol'.format(tfunc + ' vibrational', self.get_zpve() + self.get_vibrational_energy(T)))
-        print('        {0:<16s} : {1:15.3f}  kJ/mol'.format('@ 0 K (ZPVE)', self.get_zpve()))
-        print('        {0:<16s} : {1:15.3f}  kJ/mol'.format('@ {0:6.2f} K'.format(T), self.get_vibrational_energy(T)))
+        print('{0:<25s} : {1:14.3f}  kJ/mol'.format(tfname, tfvalue))
+        print('    {0:<21s} : {1:14.3f}  kJ/mol'.format(tfunc + ' translational', self.get_translational_energy(T)))
+        print('    {0:<21s} : {1:14.3f}  kJ/mol'.format(tfunc + ' rotational', self.get_rotational_energy(T)))
+        print('    {0:<21s} : {1:14.3f}  kJ/mol'.format(tfunc + ' vibrational', self.get_zpve() + self.get_vibrational_energy(T)))
+        print('        {0:<17s} : {1:14.3f}  kJ/mol'.format('@ 0 K (ZPVE)', self.get_zpve()))
+        print('        {0:<17s} : {1:14.3f}  kJ/mol'.format('@ {0:6.2f} K'.format(T), self.get_vibrational_energy(T)))
         if self.phase == 'gas':
-            print('        {0:<16s} : {1:15.3f}  kJ/mol'.format('pV', self.get_pv(T)))
+            print('        {0:<17s} : {1:14.3f}  kJ/mol'.format('pV', self.get_pv(T)))
         print('-' * 74)
 
         St = self.get_translational_entropy(T)
         Sr = self.get_rotational_entropy(T)
         Sv = self.get_vibrational_entropy(T)
         print('*T'.rjust(65))
-        print('{0:<24s} : {1:16.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('Entropy (S)', self.get_entropy(T), T * self.get_entropy(T)))
-        print('    {0:<20s} : {1:16.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('S translational', St, T * St))
-        print('    {0:<20s} : {1:16.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('S rotational', Sr, T * Sr))
-        print('    {0:<20s} : {1:16.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('S vibrational', Sv, T * Sv))
+        print('{0:<25s} : {1:15.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('Entropy (S)', self.get_entropy(T), T * self.get_entropy(T)))
+        print('    {0:<21s} : {1:15.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('S translational', St, T * St))
+        print('    {0:<21s} : {1:15.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('S rotational', Sr, T * Sr))
+        print('    {0:<21s} : {1:15.4f} kJ/mol*K    {2:11.4f} kJ/mol'.format('S vibrational', Sv, T * Sv))
         print('-' * 74)
-        print('{0:<24s} : {1:16.4f} kJ/mol'.format(tfunc + ' - T*S', tfvalue - T * self.get_entropy(T)))
-        print('-' * 50)
-        elenergy = self.atoms.get_potential_energy() * value('electron volt') * 1.0e-3 * Avogadro
-        print('{0:<24s} : {1:16.4f} kJ/mol'.format('Electronic energy', elenergy))
+        print('{0:<25s} : {1:15.4f} kJ/mol'.format(tfunc + ' - T*S', tfvalue - T * self.get_entropy(T)))
+        print('-' * 52)
+        try:
+            elenergy = self.atoms.get_potential_energy() * value('electron volt') * 1.0e-3 * Avogadro
+            print('{0:<25s} : {1:15.4f} kJ/mol'.format('Electronic energy', elenergy))
+        except:
+            pass
 
 
 class AnharmonicThermo(BaseThermochemistry):
