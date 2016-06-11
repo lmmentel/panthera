@@ -339,7 +339,7 @@ class Thermochemistry(BaseThermochemistry):
 
         .. math::
 
-           ZPVE(T) = \\frac{1}{2}\sum^{3N-6}_{i=1} h\omega_{i}
+           E_{\\text{ZPV}} = \\frac{1}{2}\sum^{3N-6}_{i=1} h\omega_{i}
 
         '''
 
@@ -472,8 +472,8 @@ class Thermochemistry(BaseThermochemistry):
 
         .. math::
 
-           C_{p,vib}(T) = R\sum^{3N-6}_{i=1} \left(\\frac{h\omega_{i}}{k_{B}T\\right)^{2}
-                        \\frac{\exp(-h\omega_{i}/k_{B}T)}{(1 - \exp(-h\omega_{i}/k_{B}T)^{2}}
+           C_{p,vib}(T) = R\sum^{3N-6}_{i=1} \left(\\frac{h\omega_{i}}{k_{B}T}\\right)^{2}
+                        \\frac{\exp(-h\omega_{i}/k_{B}T)}{\left[1 - \exp(-h\omega_{i}/k_{B}T)\\right]^{2}}
 
         '''
 

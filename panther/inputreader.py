@@ -142,9 +142,13 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2au=True,
     hessian : numpy.array
         Hessian matrix
 
+    Notes
+    -----
+
     .. note::
-       By default VASP prints negative hessian so the elements are
-       multiplied by -1 to restore the original hessian
+       By default VASP prints negative hessian so the elements should be
+       multiplied by -1 to restore the original hessian, this is done by
+       default with ``negative=True``
 
     '''
 
