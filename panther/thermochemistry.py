@@ -264,6 +264,26 @@ class BaseThermochemistry(object):
 
         return Boltzmann * T * Avogadro * 1.0e-3
 
+    def get_translational_heat_capacity(self):
+        '''
+        Translational heat capacity
+        '''
+
+        return 2.5 * gas_constant * 1.0e-3
+
+    def get_rotational_heat_capacity(self):
+        '''
+        Rotational heat capacity
+        '''
+
+        if self.phase == 'gas':
+            if self.pointgroup in ['Coov', 'Dooh']:
+                return gas_constant * 1.0e-3
+            else:
+                return 1.5 * gas_constant * 1.0e-3
+        else:
+            return 0.0
+
     def summary(self, T=273.15, p=0.1):
         '''
         Print summary with the thermochemical data at temperature `T` in kJ/mol
@@ -438,7 +458,7 @@ class Thermochemistry(BaseThermochemistry):
             + self.get_rotational_entropy(T)\
             + self.get_vibrational_entropy(T)
 
-    def get_heat_capacity(self, T=273.15):
+    def get_vibrational_heat_capacity(self, T=273.15):
         '''
         Return the heat capacity
 
@@ -446,9 +466,33 @@ class Thermochemistry(BaseThermochemistry):
         ----------
         T : float
             Temperature in `K`
+
+        Notes
+        -----
+
+        .. math::
+
+           C_{p,vib}(T) = R\sum^{3N-6}_{i=1} \left(\\frac{h\omega_{i}}{k_{B}T\\right)^{2}
+                        \\frac{\exp(-h\omega_{i}/k_{B}T)}{(1 - \exp(-h\omega_{i}/k_{B}T)^{2}}
+
         '''
 
-        raise NotImplementedError
+        kT = Boltzmann * T
+
+        frac = np.sum(np.power(self.vibenergies / kT, 2)
+                * (np.exp(-self.vibenergies / kT) /
+                    np.power(1.0 - np.exp(-self.vibenergies / kT), 2)))
+
+        return 1.0e-3 * gas_constant * frac
+
+    def get_heat_capacity(self, T=273.15):
+        '''
+        Heat capacity at constant pressure
+        '''
+
+        return self.get_translational_heat_capacity()\
+            + self.get_translational_heat_capacity()\
+            + self.get_vibrational_heat_capacity(T)
 
     def summary(self, T=273.15, p=0.1):
         '''
