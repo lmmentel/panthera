@@ -3,6 +3,8 @@ import numpy as np
 
 from .vibrations import harmonic_vibrational_analysis
 
+MAXITER = 50
+
 
 def nmoptimize(atoms, hessian, calc, proj_translations=True,
                proj_rotations=True, gtol=1.0e-5):
@@ -13,25 +15,34 @@ def nmoptimize(atoms, hessian, calc, proj_translations=True,
     ----------
     atoms : ase.Atoms
     hessian : array_like
-        Hessian matrix
+        Hessian matrix in eV/Angstrom^2
     calc : ase.Calculator
+        ASE Calcualtor instance to be used to calculate forces
+    gtol : float, default=1.0e-5
+        Energy gradient threshold
 
     Notes
     -----
 
-    .. see-also::
+    Internally eV and Angstroms are used.
+
+    .. seealso::
+
+       Bour, P., & Keiderling, T. A. (2002). Partial optimization of molecular geometry
+       in normal coordinates and use as a tool for simulation of vibrational spectra.
+       The Journal of Chemical Physics, 117(9), 4126.
+       `doi:10.1063/1.1498468 <http://dx.doi.org/10.1063/1.1498468>`_
 
     '''
 
     natoms = atoms.get_number_of_atoms()
     ndof = 3 * natoms
     masses = atoms.get_masses()
-    pos = atoms.get_positions()
-    coords = pos.ravel()
+    coords = atoms.get_positions().ravel()
 
     # matrix with inverse square roots of masses on diagonal
     M_invsqrt = np.zeros((ndof, ndof), dtype=float)
-    np.fill_diagonal(M_invsqrt, np.repeat(1.0 / np.sqrt(masses * prm), 3))
+    np.fill_diagonal(M_invsqrt, np.repeat(1.0 / np.sqrt(masses), 3))
 
     # calculate hessian eigenvalues and eigenvectors
     evals, evecs = harmonic_vibrational_analysis(hessian, atoms,
@@ -73,7 +84,7 @@ def nmoptimize(atoms, hessian, calc, proj_translations=True,
 
         delta_grad = grad - grad_old
 
-        update_hessian(grad, grad_old, step_cart, hessian)
+        hessian = update_hessian(grad, grad_old, step_cart, hessian)
 
         grad_old = grad.copy()
 
@@ -94,6 +105,10 @@ def nmoptimize(atoms, hessian, calc, proj_translations=True,
                                                ascomplex=False)
             np.save('hessian_evalues', evals)
             np.save('hessian_evectors', evecs)
+
+        if iteration > MAXITER:
+            print('### convergence NOT achieved after ', iteration, ' iterations')
+            break
 
         step_nm = -2.0 * grad_nm / (evals * (1.0 + np.sqrt(1.0 + (4.0 * grad_nm**2) / evals**2)))
         step_cart = np.dot(mwevecs, step_nm)
