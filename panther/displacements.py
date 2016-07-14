@@ -19,15 +19,20 @@ DISPNORM_THRESH = 1.0e-2
 CARTDISP_THRESH = 1.0e-6
 
 
-def get_nvibdof(atoms, job, system, include_constr=False):
+def get_nvibdof(atoms, proj_rotations, proj_translations, phase,
+                include_constr=False):
     '''
     Calculate the number of vibrational degrees of freedom
 
     Parameters
     ----------
     atoms : ase.Atoms
-    job : dict
-    system : dict
+    proj_translations : bool
+        If ``True`` translational degrees of freedom will be projected from
+        the hessian
+    proj_rotations : bool
+        If ``True`` rotational degrees of freedom will be projected from
+        the hessian
     include_constr : bool
         If ``True`` the constraints will be included
 
@@ -44,18 +49,18 @@ def get_nvibdof(atoms, job, system, include_constr=False):
         ndof = 3 * len(atoms)
 
     extradof = 0
-    if system['phase'].lower() == 'gas':
-        if job['proj_rotations'] & job['proj_translations']:
+    if phase.lower() == 'gas':
+        if proj_rotations & proj_translations:
             if ndof > 6:
                 extradof = 6
             elif ndof == 6:
                 extradof = 5
-    elif system['phase'].lower() == 'solid':
-        if job['proj_rotations'] | job['proj_translations']:
+    elif phase.lower() == 'solid':
+        if proj_rotations | proj_translations:
             extradof = 3
     else:
         raise ValueError('Wrong phase specification: {}, expecting either '
-                         '"gas" or "solid"'.format(job.phase))
+                         '"gas" or "solid"'.format(phase))
 
     return ndof - extradof
 
