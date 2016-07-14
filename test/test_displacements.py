@@ -16,7 +16,7 @@ ev2hartree = value('electron volt-hartree relationship')
 cwd = os.path.abspath(os.path.dirname(__file__))
 
 
-def test_displacements_meoh():
+def test_displacements_meoh(tmpdir):
 
     tmpdir.chdir()
 
