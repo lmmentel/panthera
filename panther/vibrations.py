@@ -183,12 +183,14 @@ def project(atoms, hessian, ndof, proj_translations=True,
 
 
 def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
-                                  proj_rotations=False, ascomplex=True):
+                                  proj_rotations=False, ascomplex=True,
+                                  massau=True):
     '''
-    Given a force constant matrix (hessian) decide whether or not to project
-    the translational and rotational degrees of freedom based on
-    ``proj_translations`` and ``proj_rotations`` argsuments in ``job``
-    respectively.
+    Given a force constant matrix (hessian) perform the harmonic vibrational
+    analysis, by calculatng the eigevalues and eigenvectors of the mass
+    weighted hessian. Additionally projection of the translational and
+    rotational degrees of freedom can be pefformed by specifying
+    ``proj_translations`` and ``proj_rotations`` argsuments.
 
     Parameters
     ----------
@@ -203,6 +205,8 @@ def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
     proj_rotations : bool
         If ``True`` rotational degrees of freedom will be projected from
         the hessian
+    massau : bool
+        If True atomic units of mass will be used
     ascomplex : bool
         If there are complex eigenvalues return the array as complex type
         otherwise make the complex values negative and return array of reals
@@ -229,7 +233,10 @@ def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
 
     # create the mass vector, with the masses for each atom repeated 3 times
     # and convert to atomic units
-    masses = np.repeat(atoms.get_masses(), 3) / value('electron mass in u')
+    unitconv = 1.0
+    if massau:
+        unitconv = 1.0 / value('electron mass in u')
+    masses = np.repeat(atoms.get_masses(), 3) * unitconv
 
     # calculate the mass weighted hessian
     masssqrt = np.diag(np.sqrt(1.0 / masses))
