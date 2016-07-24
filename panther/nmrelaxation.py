@@ -107,7 +107,6 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
         print(' new coordinates '.center(50, '-'))
         print(coords)
 
-    not_converged = True
     iteration = 0
 
     # header for the convergence information
@@ -119,12 +118,8 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
         np.sqrt(np.dot(step_nm, step_nm)), atoms.get_potential_energy(),
         datetime.now().strftime('%H:%M:%S %d-%m-%Y')))
 
-    while not_converged:
+    while iteration <= maxiter:
         iteration += 1
-
-        if iteration > maxiter:
-            print('### convergence NOT achieved after ', iteration, ' iterations')
-            break
 
         # delta_coord = coords - coords_old
 
@@ -165,6 +160,8 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
                                                ascomplex=False, massau=False)
             np.save('hessian_evalues', evals)
             np.save('hessian_evectors', evecs)
+            print('# convergence achieved after {} iterations'.format(iteration))
+            break
 
         step_nm[:nvibdof] = -2.0 * grad_nm[:nvibdof] / (evals[:nvibdof]
             + np.sqrt(evals[:nvibdof]**2 + 4.0 * grad_nm[:nvibdof]**2))
@@ -190,6 +187,8 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
 
             print(' new coordinates '.center(50, '-'))
             print(coords)
+    else:
+        print('### convergence NOT achieved after ', iteration, ' iterations')
 
 
 def update_hessian(grad, grad_old, dx, hessian, update='BFGS'):
