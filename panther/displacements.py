@@ -11,7 +11,7 @@ from six import string_types
 
 from writeBmat import get_internals
 
-from .inputreader import print_modeinfo
+from .io import print_modeinfo
 from .pes import expandrange
 
 FREQ_THRESH = 1.0e6

@@ -1,8 +1,8 @@
 
 import argparse
 import os
-from .inputreader import read_em_freq, read_pes, write_modes
-from .plotting import plotmode, plotmode_legacy
+from .io import read_em_freq, read_pes, write_modes
+from .plotting import plotmode_legacy
 
 
 def plotmode_cli():

@@ -51,8 +51,6 @@ def plotmode_legacy(mode, pes, coeff6, coeff4, output=None):
         plt.show()
 
 
-
-
 def plotmode(mode, energies, mi, c6o, c4o, output=None):
     '''
     Plot a given mode

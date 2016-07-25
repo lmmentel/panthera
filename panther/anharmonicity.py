@@ -8,7 +8,7 @@ import pandas as pd
 
 from scipy.constants import value, Boltzmann, Avogadro, Planck, gas_constant
 
-from .inputreader import print_mode_thermo
+from .io import print_mode_thermo
 
 
 def factsqrt(m, n):

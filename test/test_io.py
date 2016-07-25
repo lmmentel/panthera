@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from panther.inputreader import read_vasp_hessian
+from panther.io import read_vasp_hessian
 
 from scipy.constants import angstrom, value
 

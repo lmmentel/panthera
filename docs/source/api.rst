@@ -32,10 +32,10 @@ panther.displacements module
     :undoc-members:
     :show-inheritance:
 
-panther.inputreader module
+panther.io module
 ==========================
 
-.. automodule:: panther.inputreader
+.. automodule:: panther.io
     :members:
     :undoc-members:
     :show-inheritance:

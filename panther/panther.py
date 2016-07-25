@@ -11,7 +11,7 @@ import numpy as np
 
 from ase.io.vasp import read_vasp_out
 
-from .inputreader import parse_arguments, read_vasp_hessian, write_internal
+from .io import parse_arguments, read_vasp_hessian, write_internal
 from .vibrations import harmonic_vibrational_analysis
 from .anharmonicity import anharmonic_frequencies, merge_vibs
 from .thermochemistry import Thermochemistry, AnharmonicThermo

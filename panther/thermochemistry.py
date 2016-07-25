@@ -8,7 +8,7 @@ from builtins import (bytes, str, open, super, range,
 import numpy as np
 from scipy.constants import value, pi, Avogadro, Planck, hbar, Boltzmann, gas_constant
 
-from .inputreader import get_symmetry_number
+from .io import get_symmetry_number
 
 
 def constraints2mask(atoms):

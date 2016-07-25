@@ -80,7 +80,7 @@ for convenience
 
 .. code-block:: python
 
-   from panther.inputreader import read_vasp_hessian
+   from panther.io import read_vasp_hessian
 
    # adjust the calcualtor argument for hessian calculation 
    calc.set(ibrion=5, potim=0.02)
