@@ -224,13 +224,6 @@ def update_hessian(grad, grad_old, dx, hessian, update='BFGS'):
         hdx = np.dot(hessian, dx)
         b = np.dot(dx, hdx)
 
-        #print(' BFGS '.center(80, '='))
-        #print('dxdg : ', dxdg)
-        #print('b    : ', b)
-        #print('dg   : ', dg)
-        #print('dx   : ', dx)
-        #print('hdx  : ', hdx)
-
         if np.abs(dxdg) < macheps or np.abs(b) < macheps:
             return hessian
         else:
