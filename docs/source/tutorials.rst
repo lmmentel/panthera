@@ -397,7 +397,7 @@ are used to calculate the thermodynamic functions
 
 
 .. _ase.Atoms: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
-.. _ASE: hhttps://wiki.fysik.dtu.dk/ase/index.html
+.. _ASE: https://wiki.fysik.dtu.dk/ase/index.html
 .. _atomic units: https://en.wikipedia.org/wiki/Atomic_units
 .. _calculators: https://wiki.fysik.dtu.dk/ase/ase/calculators/calculators.html
 .. _DataFrame: http://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html
