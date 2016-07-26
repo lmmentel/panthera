@@ -15,6 +15,13 @@ Thermochemistry
 .. autoclass:: panther.thermochemistry.Thermochemistry
    :members:
 
+NormalModeBFGS
+==============
+
+.. currentmodule:: panther.nmrelaxation
+
+.. autoclass:: panther.nmrelaxation.NormalModeBFGS
+   :members:
 
 panther.anharmonicity
 =====================

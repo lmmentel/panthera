@@ -152,6 +152,39 @@ calculate thermochemical functions
    Electronic energy        :       -2918.9516 kJ/mol
 
 
+Normal Mode Relaxation
+----------------------
+
+In some cases it is advantegeous to refine the structure using displacements
+along normal modes of vibrations, such a functionality is provided through
+the :py:class:`NormalModeBFGS <panther.nmrelaxation.NormalModeBFGS>` which
+is based on the
+`Optimizer <https://wiki.fysik.dtu.dk/ase/ase/optimize.html#module-ase.optimize>`_
+class from the ASE_ pakckage. The method requires an initial guess for the hessian
+matrix for which we'll reuse the hessian calculated in one of the previous
+steps, however in this case the hessian should be in eV/Angstrom^2 units,
+therefore it needs to be converted.
+
+.. code-block:: python
+
+   from panther.nmrelaxation import NormalModeBFGS
+
+   from scipy.constants import angstrom, value
+
+   ang2bohr = angstrom / value('atomic unit of length')
+   ev2hartree = value('electron volt-hartree relationship')
+
+   hessian = hessian * (ang2bohr**2) /ev2hartree
+
+   # create the optimizer
+   optimizer = NormalModeBFGS(meoh, 'gas', hessian, logfile='optimizer.log',
+                              trajectory='relaxed.traj', proj_translations=True,
+                              proj_rotations=True)
+
+   # start the relaxation
+   optimizer.run(fmax=0.001)
+
+
 Anharmonic Thermochemistry
 --------------------------
 
