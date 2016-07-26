@@ -12,7 +12,7 @@ THREVAL = 1.0e-12
 
 def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
                proj_rotations=True, gtol=1.0e-5, verbose=False,
-               hessian_update='BFGS', maxiter=50):
+               hessian_update='BFGS', steps=100000):
     '''
     Relax the strcture using normal mode displacements
 
@@ -30,7 +30,7 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
     hessian_update : str
         Approximate formula to update hessian, possible values are 'BFGS',
         'SR1' and 'DFP'
-    maxiter : int
+    steps : int
         Maximal number of iteration to be performed
     verbose : bool
         If ``True`` additional debug information will be printed
@@ -118,7 +118,7 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
         np.sqrt(np.dot(step_nm, step_nm)), atoms.get_potential_energy(),
         datetime.now().strftime('%H:%M:%S %d-%m-%Y')))
 
-    while iteration <= maxiter:
+    while iteration <= steps:
         iteration += 1
 
         # delta_coord = coords - coords_old
