@@ -15,19 +15,19 @@
 
 import sys
 import os
+import inspect
 
 if sys.version_info.major == 3:
     from unittest.mock import Mock    # if python ver >= 3.3
 else:
     from mock import Mock as Mock     # if python ver 2.7
 
-import sphinx_rtd_theme
-import inspect
-from sphinx import apidoc
-
-MOCK_MODULES = ['argparse', 'ase', 'ase.io', 'ase.io.vasp', 'numpy', 'numpy.ma', 'numpy.linalg',
-                'matplotlib', 'matplotlib.pyplot', 'scipy', 'scipy.constants', 'scipy.optimize',
-                'scipy.linalg', 'pandas', 'seaborn', 'ase.io.trajectory', 'writeBmat']
+MOCK_MODULES = ['argparse', 'ase', 'ase.io', 'ase.io.trajectory',
+                'ase.io.vasp', 'ase.optimize', 'ase.optimize.optimize',
+                'numpy', 'numpy.ma', 'numpy.linalg', 'matplotlib',
+                'matplotlib.pyplot', 'scipy', 'scipy.constants',
+                'scipy.optimize', 'scipy.linalg', 'pandas', 'seaborn',
+                'writeBmat']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()

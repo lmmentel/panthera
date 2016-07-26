@@ -321,6 +321,7 @@ class Thermochemistry(BaseThermochemistry):
     atoms : ase.Atoms
         Atoms obect
     phase : str
+        Phase, should be either `gas` or `solid`
     pointgroup : str
     symmetrynumber : str
     '''
