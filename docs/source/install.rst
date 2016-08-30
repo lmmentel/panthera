@@ -11,11 +11,7 @@ Dependencies
     - `seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_
     - `future <https://pypi.python.org/pypi/future>`_
     - `six <https://pypi.python.org/pypi/six>`_
-
-The :py:mod:`displacements <panther.displacements>` module uses :py:func:`get_internals` function
-from the ``writeBmat`` package that is adapted from the GADGET suite [1]_ and is not
-distrubuted as a part o this package.
-
+    - `writeBmat <https://bitbucket.org/lukaszmentel/writebmat>`_
 
 The recommended installation method is with pip_. The latest version
 can be installed directly from `bitbucket repository`_:
