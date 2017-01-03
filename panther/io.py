@@ -13,6 +13,7 @@ import io
 import six
 
 from collections import defaultdict, OrderedDict
+from lxml.etree import parse
 
 import numpy as np
 import pandas as pd
@@ -153,8 +154,6 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert_to_au=True,
 
     '''
 
-    import re
-    import numpy as np
     from ase.units import Hartree, Bohr
 
     with open(outcar, 'r') as foutcar:
@@ -191,6 +190,96 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert_to_au=True,
         return -1.0 * hessian, [pat.match(x).groups() for x in labels]
     else:
         return -1.0 * hessian
+
+
+def read_vasp_hessian_xml(xml='vasprun.xml', symmetrize=True,
+                          convert_to_au=True, stripmass=True):
+    '''
+    Parse the hessian from the VASP ``vasprun.xml`` file into a numpy array
+
+    Parameters
+    ----------
+    xml : str
+        Name of the VASP output, default is ``vasprun.xml``
+    symmetrize : bool
+        If ``True`` the hessian will be symmetrized
+    convert_to_au : bool
+        If ``True`` convert the hessian to atomic units, in the other
+        case hessian is returned in [eV/Angstrom**2]
+    dof_labels : bool, default is False
+        If ``True`` a list of labels corresponding to the degrees of
+        freedom will also be returned
+    stripmass : bool
+        If ``True`` use VASP default masses to transform hessian to
+        non-mass-weighted form
+
+    Returns
+    -------
+    hessian : numpy.array
+        Hessian matrix
+
+    Notes
+    -----
+
+    .. note::
+       By default VASP prints negative hessian so the elements should be
+       multiplied by -1 to restore the original hessian, this is done by
+       default
+
+    '''
+
+    from ase.units import Hartree, Bohr
+
+    doc = parse(xml)
+    root = doc.getroot()
+
+    species = []
+    for entry in root.find("atominfo/array[@name='atoms']/set"):
+        species.append(entry[0].text.strip())
+
+    natoms = int(root.find('atominfo/atoms').text)
+    dof = 3 * natoms
+
+    # intialize defaults assuming complete hessian calculation
+    index = np.repeat(np.arange(natoms, dtype=int), 3)
+    hess_size = dof
+
+    constblock = root.find(
+            'structure[@name="initialpos"]/varray[@name="selective"]')
+    if constblock is not None:
+        selective = np.ones((natoms, 3), dtype=bool)
+        for i, v in enumerate(constblock):
+            for j, fixed in enumerate(v.text.split()):
+                selective[i, j] = (fixed == 'T')
+
+        index = np.flatnonzero(selective.ravel())
+        hess_size = index.size
+
+    hessian = np.zeros((hess_size, hess_size), dtype=float)
+
+    for i, v in enumerate(root.find(
+            'calculation/dynmat/varray[@name="hessian"]')):
+        hessian[i] = -np.array([float(val) for val in v.text.split()])
+
+    if stripmass:
+        # get the masses that VASP uses by default
+        vasp_mass = {}
+        for element in root.find("atominfo/array[@name='atomtypes']/set"):
+            vasp_mass[element[1].text.strip()] = float(element[2].text)
+
+        vasp_massvec = np.zeros(hess_size, dtype=float)
+        for i, j in enumerate(index):
+            vasp_massvec[i] = vasp_mass[species[j]]
+
+        hessian *= np.sqrt(np.outer(vasp_massvec, vasp_massvec))
+
+    if symmetrize:
+        hessian = (hessian + hessian.T) * 0.5
+
+    if convert_to_au:
+        hessian = hessian * Bohr**2 / Hartree
+
+    return hessian
 
 
 def print_modeinfo(mi, output=None):
