@@ -34,7 +34,7 @@ def parse_arguments():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('command',
-                        choices=('convert', 'harmonic', 'anharmonic'),
+                        choices=('harmonic', 'anharmonic'),
                         help='choose what to do')
     parser.add_argument('config',
                         help='file with the configuration parameters for thermo')
@@ -120,8 +120,8 @@ def get_symmetry_number(pointgroup):
                              'a rotational symmetry number'.format(pointgroup))
 
 
-def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2au=True,
-                      negative=True):
+def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert_to_au=True,
+                      dof_labels=False):
     '''
     Parse the hessian from the VASP ``OUTCAR`` file into a numpy array
 
@@ -131,11 +131,12 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2au=True,
         Name of the VASP output, default is ``OUTCAR``
     symmetrize : bool
         If ``True`` the hessian will be symmetrized
-    covert2au : bool
+    convert_to_au : bool
         If ``True`` convert the hessian to atomic units, in the other
         case hessian is returned in [eV/Angstrom**2]
-    negative : bool
-        If ``True`` the hessian will be multiplied by -1 on return
+    dof_labels : bool, default is False
+        If ``True`` a list of labels corresponding to the degrees of
+        freedom will also be returned
 
     Returns
     -------
@@ -148,45 +149,48 @@ def read_vasp_hessian(outcar='OUTCAR', symmetrize=True, convert2au=True,
     .. note::
        By default VASP prints negative hessian so the elements should be
        multiplied by -1 to restore the original hessian, this is done by
-       default with ``negative=True``
+       default
 
     '''
 
-    from scipy.constants import angstrom, value
+    import re
+    import numpy as np
+    from ase.units import Hartree, Bohr
 
-    ang2bohr = angstrom / value('atomic unit of length')
-    ev2hartree = value('electron volt-hartree relationship')
+    with open(outcar, 'r') as foutcar:
+        for line in foutcar:
+            if 'Degrees of freedom DOF' in line:
+                dof = int(line.split()[-1])
+                hessian = np.zeros((dof, dof), dtype=float)
+                labels = []
+                break
 
-    if os.path.exists(outcar):
-        with open(outcar, 'r') as foutcar:
-            lines = foutcar.readlines()
+        for line in foutcar:
+            if 'SECOND DERIVATIVES ' in line:
+
+                for _ in range(2):
+                    line = next(foutcar)
+
+                for i in range(dof):
+                    line = next(foutcar)
+                    linesplit = line.split()
+                    labels.append(linesplit[0])
+                    hessian[i] = [float(x) for x in linesplit[1:]]
+                break
+        else:
+            raise ValueError('No hessian found in file: {}'.format(outcar))
+
+    if symmetrize:
+        hessian = (hessian + hessian.T) * 0.5
+
+    if convert_to_au:
+        hessian = hessian * Bohr**2 / Hartree
+
+    if dof_labels:
+        pat = re.compile(r'(\d+)([XYZ])')
+        return -1.0 * hessian, [pat.match(x).groups() for x in labels]
     else:
-        raise OSError("File {} doesn't exist".format(outcar))
-
-    for n, line in enumerate(lines):
-
-        if 'SECOND DERIVATIVES ' in line:
-            dofpatt = re.compile(r'Degrees of freedom DOF\s*=\s*(\d+)')
-            match = next(dofpatt.search(line) for line in lines if dofpatt.search(line))
-            dof = int(match.group(1))
-
-            hessian = np.zeros((dof, dof), dtype=float)
-
-            for i, row in enumerate(lines[n + 3: n + 3 + dof]):
-                hessian[i] = [float(x) for x in row.split()[1:]]
-
-            if symmetrize:
-                hessian = (hessian + hessian.T) * 0.5
-
-            if convert2au:
-                hessian = hessian * ev2hartree / (ang2bohr**2)
-
-            if negative:
-                hessian = -1 * hessian
-
-            return hessian
-    else:
-        raise ValueError('No hessian found in file: {}'.format(outcar))
+        return -1.0 * hessian
 
 
 def print_modeinfo(mi, output=None):
@@ -342,48 +346,6 @@ def read_poscars(filename):
     for mode, point, geometry in zip(it, it, it):
         images[tuple([int(mode) -1, int(point)])] = read_vasp(io.StringIO(six.text_type(geometry)))
     return images
-
-
-def write_internal(atoms, hessian, job):
-    '''
-    Write a file with the system details
-    '''
-
-    with open(job['internal_fname'], 'w') as fout:
-
-        fout.write('start title:\n')
-        fout.write('End of frequencies calculation\n')
-
-        fout.write('start lattice\n')
-        for row in atoms.get_cell():
-            fout.write('{0:15.9f} {1:15.9f} {2:15.9f}\n'.format(*tuple(row)))
-        fout.write('end lattice\n')
-
-        fout.write('start atoms\n')
-        for atom in atoms:
-            fout.write('{0:2s} {1:15.5f} {2:15.5f} {3:15.5f} T T T\n'.format(
-                atom.symbol, *tuple(atom.position)))
-        fout.write('end atoms\n')
-
-        fout.write('start energy\n')
-        fout.write('{0:15.8f}\n'.format(atoms.get_potential_energy()))
-        fout.write('end energy\n')
-
-        if len(atoms) * 3 == hessian.shape[0]:
-            hesstype = 'full'
-        else:
-            hesstype = 'partial'
-
-        fout.write('input hessian\n')
-        fout.write('{0:s}\n'.format(hesstype))
-
-        fout.write('start hessian matrix\n')
-        for row in hessian:
-            fout.write(' '.join(['{0:15.8f}'.format(x) for x in row]) + '\n')
-        fout.write('end hessian matrix\n')
-
-    print('wrote file: "{}" with the data in internal format'.format(
-        job['internal_fname']))
 
 
 def write_modes(filename='POSCARs'):
