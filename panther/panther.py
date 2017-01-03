@@ -11,7 +11,7 @@ import numpy as np
 
 from ase.io.vasp import read_vasp_out
 
-from .io import parse_arguments, read_vasp_hessian, write_internal
+from .io import parse_arguments, read_vasp_hessian
 from .vibrations import harmonic_vibrational_analysis
 from .anharmonicity import anharmonic_frequencies, merge_vibs
 from .thermochemistry import Thermochemistry, AnharmonicThermo
@@ -55,14 +55,7 @@ def main():
     pprint(job)
     pprint(system)
 
-    if args.command == 'convert':
-        atoms = read_vasp_out('OUTCAR', index=0)
-        hessian = read_vasp_hessian('OUTCAR', symmetrize=False, convert2au=False,
-                                    negative=False)
-
-        write_internal(atoms, hessian, job)
-
-    elif args.command == 'harmonic':
+    if args.command == 'harmonic':
 
         if job['code'] == 'VASP':
             atoms = read_vasp_out('OUTCAR', index=0)
@@ -110,6 +103,7 @@ def main():
 
             thermo = AnharmonicThermo(df, atoms, conditions, system)
             thermo.summary(temp)
+
 
 if __name__ == '__main__':
 
