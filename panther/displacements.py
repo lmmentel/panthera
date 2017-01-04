@@ -77,7 +77,7 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
     hessian : array_like
         Hessian matrix
     freqs : array_like
-        Frequencies (square root of the hessian eigenvalues) in atomic units
+        Frequencies (square roots of the hessian eigenvalues) in atomic units
     normal_modes : array_like
         Normal modes in atomic units
     npoints : int

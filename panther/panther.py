@@ -68,18 +68,21 @@ def main():
                                                             job['proj_translations'],
                                                             job['proj_rotations'])
 
-        freqs = 0.01 * value('hartree-inverse meter relationship') * freqs
-
-        # save the result
+        # save the freqs and normal modes in atomic units
         print('INFO: Saving vibrational frequencies to: frequencies.npy')
         np.save('frequencies', freqs)
         print('INFO: Saving vibrational normal modes to: normal_modes.npy')
         np.save('normal_modes', normal_modes)
 
-        print('\n' + ' Vibrational frequencies in [cm^-1] '.center(50, '='), end='\n\n')
+        # convert the frequencies to inverse centimeters
+        freqs = 0.01 * value('hartree-inverse meter relationship') * freqs
+
+        print('\n' + ' Vibrational frequencies in [cm^-1] '.center(50, '='),
+              end='\n\n')
         print('        {0:^20s} {1:^20s}'.format('real', 'imag'))
         for i, v in enumerate(freqs, start=1):
-            print('{0:5d} : '.format(i), '{0:20.10f} {1:20.10f}'.format(v.real, v.imag))
+            print('{0:5d} : '.format(i), '{0:20.10f} {1:20.10f}'.format(v.real,
+                                                                        v.imag))
 
         # convert frequencies from [cm^-1] to [Hz] and get vib. energies in Joules
         vibenergies = Planck * freqs.real * 100.0 * value('inverse meter-hertz relationship')
