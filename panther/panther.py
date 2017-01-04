@@ -85,7 +85,8 @@ def main():
         vibenergies = Planck * freqs.real * 100.0 * value('inverse meter-hertz relationship')
         vibenergies = vibenergies[vibenergies > 0.0]
 
-        thermo = Thermochemistry(vibenergies, atoms, system)
+        thermo = Thermochemistry(vibenergies, atoms, phase=system['phase'],
+                                 pointgroup=system['pointgroup'])
 
         for temp in temperature_range(conditions):
 
