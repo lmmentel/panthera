@@ -60,7 +60,7 @@ def main():
         if job['code'] == 'VASP':
             atoms = read_vasp_out('OUTCAR', index=0)
             hessian = read_vasp_hessian('OUTCAR', symmetrize=True,
-                                        convert2au=True, negative=True)
+                                        convert_to_au=True)
         else:
             raise NotImplementedError('Code {} is not supported yet.'.format(job['code']))
 

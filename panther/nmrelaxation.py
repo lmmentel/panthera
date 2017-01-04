@@ -81,6 +81,7 @@ class NormalModeBFGS(Optimizer, object):
 
         @hessian.setter
         def hessian(self, value):
+            'Initialize the hessian matrix'
 
             if hessian is None:
                 self._hessian = np.eye(3 * len(self.atoms)) * 70.0
@@ -184,8 +185,8 @@ class NormalModeBFGS(Optimizer, object):
 
         grad_nm = np.dot(mwevecs.T, grad)
         step_nm = np.zeros_like(grad_nm)
-        step_nm[:nv] = -2.0 * grad_nm[:nv] / (evals[:nv]
-                    + np.sqrt(evals[:nv]**2 + 4.0 * grad_nm[:nv]**2))
+        step_nm[:nv] = -2.0 * grad_nm[:nv] / (evals[:nv] +
+                       np.sqrt(evals[:nv]**2 + 4.0 * grad_nm[:nv]**2))
 
         step_cart = np.dot(mwevecs, step_nm)
         new_coords = coords + step_cart
@@ -208,7 +209,6 @@ class NormalModeBFGS(Optimizer, object):
         step = 0
         while step < steps:
             f = self.atoms.get_forces()
-            # self.log(f)
             self.call_observers()
             if self.converged(f):
                 return
