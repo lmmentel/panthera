@@ -45,17 +45,15 @@ def parse_arguments():
         raise ValueError('Specified file <{}> does not exist'.format(args.config))
 
     defaults = {
-        'Tinitial'       : '303.15',
-        'Tfinal'         : '303.15',
-        'Tstep'          : '0.0',
-        'pressure'       : '0.1',
-        'translations'   : 'true',
-        'rotations'      : 'true',
-        'pointgroup'     : 'C1',
-        'phase'          : 'gas',
-        'code'           : None,
-        'internal_fname' : 'default',
-        'eigenhess_fname': 'userinstr',
+        'Tinitial'    : '303.15',
+        'Tfinal'      : '303.15',
+        'Tstep'       : '0.0',
+        'pressure'    : '0.1',
+        'translations': 'true',
+        'rotations'   : 'true',
+        'pointgroup'  : 'C1',
+        'phase'       : 'gas',
+        'code'        : None,
     }
 
     config = cp.ConfigParser(defaults=defaults, allow_no_value=True)
@@ -70,8 +68,6 @@ def parse_arguments():
     job = {}
     job['proj_translations'] = config.getboolean('job', 'translations')
     job['proj_rotations'] = config.getboolean('job', 'rotations')
-    job['internal_fname'] = config.get('job', 'internal_fname')
-    job['eigenhess_fname'] = config.get('job', 'eigenhess_fname')
     job['code'] = config.get('job', 'code')
 
     system = {}
