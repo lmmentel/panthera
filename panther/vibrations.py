@@ -187,9 +187,9 @@ def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
                                   massau=True):
     '''
     Given a force constant matrix (hessian) perform the harmonic vibrational
-    analysis, by calculatng the eigevalues and eigenvectors of the mass
+    analysis, by calculating the eigevalues and eigenvectors of the mass
     weighted hessian. Additionally projection of the translational and
-    rotational degrees of freedom can be pefformed by specifying
+    rotational degrees of freedom can be performed by specifying
     ``proj_translations`` and ``proj_rotations`` argsuments.
 
     Parameters
