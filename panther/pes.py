@@ -101,7 +101,7 @@ def fit_potentials(modeinfo, energies):
     energies = energies * value('electron volt-hartree relationship')
     E = energies.as_matrix()
 
-    D = np.dot(modeinfo['displacement'].reshape(-1, 1), np.arange(-4, 5).reshape(1, -1))
+    D = np.dot(modeinfo['displacement'].values.reshape(-1, 1), np.arange(-4, 5).reshape(1, -1))
     D = D / np.sqrt(modeinfo['effective_mass'].values).reshape(-1, 1)
     D = D.astype(float)
 
