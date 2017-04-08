@@ -1,9 +1,9 @@
 import os
 import numpy as np
+from scipy.constants import angstrom, value
 
 from panther.io import read_vasp_hessian
 
-from scipy.constants import angstrom, value
 
 ang2bohr = angstrom / value('atomic unit of length')
 ev2hartree = value('electron volt-hartree relationship')
@@ -18,25 +18,18 @@ def test_read_vasp_hessian_meoh():
     outcar = os.path.join(cwd, 'data/meoh_hessian.OUTCAR')
 
     # as stored in OUTCAR
-    hessian = read_vasp_hessian(outcar, symmetrize=False,
-                                convert2au=False, negative=False)
+    hessian = read_vasp_hessian(outcar, symmetrize=False, convert_to_au=False)
 
-    assert np.allclose(refhessian, hessian)
+    assert np.allclose(-1.0 * refhessian, hessian)
 
     # symmetrized
-    hessian = read_vasp_hessian(outcar, symmetrize=True,
-                                convert2au=False, negative=False)
-    assert np.allclose((refhessian.T + refhessian) * 0.5, hessian)
+    hessian = read_vasp_hessian(outcar, symmetrize=True, convert_to_au=False)
+    assert np.allclose(-1.0 * (refhessian.T + refhessian) * 0.5, hessian)
 
     # converted to au
-    hessian = read_vasp_hessian(outcar, symmetrize=False,
-                                convert2au=True, negative=False)
-    assert np.allclose((refhessian * ev2hartree / (ang2bohr**2)), hessian)
-
-    # negative
-    hessian = read_vasp_hessian(outcar, symmetrize=False,
-                                convert2au=False, negative=True)
-    assert np.allclose(-1.0 * refhessian, hessian)
+    hessian = read_vasp_hessian(outcar, symmetrize=False, convert_to_au=True)
+    assert np.allclose(-1.0 * (refhessian * ev2hartree / (ang2bohr**2)),
+                       hessian)
 
 
 def test_read_vasp_hessian_hcha():
@@ -47,22 +40,22 @@ def test_read_vasp_hessian_hcha():
     outcar = os.path.join(cwd, 'data/hcha.OUTCAR')
 
     # as stored in OUTCAR
-    hessian = read_vasp_hessian(outcar, symmetrize=False,
-                                convert2au=False, negative=False)
+    hessian = read_vasp_hessian(outcar, symmetrize=False, convert_to_au=False)
 
-    assert np.allclose(refhessian, hessian)
+    assert np.allclose(-1.0 * refhessian, hessian)
 
     # symmetrized
-    hessian = read_vasp_hessian(outcar, symmetrize=True,
-                                convert2au=False, negative=False)
-    assert np.allclose((refhessian.T + refhessian) * 0.5, hessian)
+    hessian = read_vasp_hessian(outcar, symmetrize=True, convert_to_au=False)
+    assert np.allclose(-1.0 * (refhessian.T + refhessian) * 0.5, hessian)
 
     # converted to au
-    hessian = read_vasp_hessian(outcar, symmetrize=False,
-                                convert2au=True, negative=False)
-    assert np.allclose((refhessian * ev2hartree / (ang2bohr**2)), hessian)
+    hessian = read_vasp_hessian(outcar, symmetrize=False, convert_to_au=True)
+    assert np.allclose(-1.0 * (refhessian * ev2hartree / (ang2bohr**2)),
+                       hessian)
 
-    # negative
-    hessian = read_vasp_hessian(outcar, symmetrize=False,
-                                convert2au=False, negative=True)
-    assert np.allclose(-1.0 * refhessian, hessian)
+
+def test_read_vasp_hessian_xml():
+
+    refhessian = np.load(os.path.join(cwd, 'data/hcha_hessian.npy'))
+
+    vaspxml = os.path.join(cwd, 'data/hcha.xml')
