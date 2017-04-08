@@ -28,13 +28,16 @@ def test_displacements_meoh(tmpdir):
     hessian = hessian * ev2hartree / (ang2bohr**2)
     hessian = -1 * hessian
 
-    freqs, normal_modes = harmonic_vibrational_analysis(hessian, meoh, proj_translations=True,
-        proj_rotations=True, ascomplex=False)
+    freqs, normal_modes = harmonic_vibrational_analysis(hessian, meoh,
+                                                        proj_translations=True,
+                                                        proj_rotations=True,
+                                                        ascomplex=False)
 
-    with open(os.path.join(cwd, 'data', 'meoh_images.pkl'), 'r') as fpkl:
+    with open(os.path.join(cwd, 'data', 'meoh_images.pkl'), 'rb') as fpkl:
         refimages = pickle.load(fpkl)
 
-    images, modeinfo = calculate_displacements(meoh, hessian, freqs, normal_modes, npoints=4)
+    images, modeinfo = calculate_displacements(meoh, hessian, freqs,
+                                               normal_modes, npoints=4)
 
     assert len(refimages) == len(images)
 
