@@ -1,6 +1,7 @@
 
 from __future__ import print_function, absolute_import, division
 
+import logging
 import pickle
 import copy
 import numpy as np
@@ -9,7 +10,7 @@ from scipy.constants import angstrom, pi, value
 from collections import OrderedDict
 from six import string_types
 
-from writeBmat import get_internals
+from writeBmat import get_internals, get_bmatrix
 
 from .io import print_modeinfo
 from .pes import expandrange
@@ -17,6 +18,10 @@ from .pes import expandrange
 FREQ_THRESH = 1.0e6
 DISPNORM_THRESH = 1.0e-2
 CARTDISP_THRESH = 1.0e-6
+
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def get_nvibdof(atoms, proj_rotations, proj_translations, phase,
@@ -65,34 +70,60 @@ def get_nvibdof(atoms, proj_rotations, proj_translations, phase,
     return ndof - extradof
 
 
+def get_internals_and_bmatrix(atoms):
+    '''
+    internals is a numpy record array with 'type' and 'value' records
+    bmatrix is a numpy array n_int x n_cart
+
+    Parameters
+    ----------
+    atoms : ase.Atoms
+        Atoms object
+    '''
+
+    intc_raw = get_internals(atoms)
+    bmatrix = get_bmatrix(atoms, intc_raw)
+    internals = np.array([(i.tag, i.value) for i in intc_raw],
+                         dtype=[('type', 'S4'), ('value', np.float32)])
+
+    mask = internals['value'] < 0.0
+    internals['value'][mask] = 2 * pi + internals['value'][mask]
+
+    return internals, bmatrix
+
+
 def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
-                            modes='all', verbose=False):
+                            modes='all'):
     '''
     Calculate displacements in internal coordinates
 
     Parameters
     ----------
     atoms : ase.Atoms
-        Atoms object
+        Atoms object with the equilibrium structure
+
     hessian : array_like
         Hessian matrix
+
     freqs : array_like
         Frequencies (square roots of the hessian eigenvalues) in atomic units
+
     normal_modes : array_like
         Normal modes in atomic units
+
     npoints : int
         Number of points to displace structure, the code will calculate
         ``2*npoints`` displacements since + and - directions are taken
+
     modes : str or list/tuple of ints, default 'all'
         Range of the modes for which the displacements will be calculated
-    verbose : bool
-        If ``True`` additional debug information is printed to stdout
 
     Returns
     -------
     images : dict of dicts
         A nested (ordred) dictionary with the structures with mode, point as
         keys, where point is a number from -4, -3, -2, -1, 1, 2, 3, 4
+
     mi : pandas.DataFrame
         DataFrame with per mode characteristics, displacements, masses
         and vibrational population analysis
@@ -107,27 +138,16 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
     masses = atoms.get_masses()
     pos = atoms.get_positions()
 
-    coords = pos.ravel() * ang2bohr
+    internals, Bmatrix = get_internals_and_bmatrix(atoms)
 
-    # internals is a numpy record array with 'type' and 'value' records
-    # bmatrix is a numpy array n_int x n_cart
-    internals, Bmatrix = get_internals(atoms, return_bmatrix=True)
-
-    mask = internals['value'] < 0.0
-    internals['value'][mask] = 2 * pi + internals['value'][mask]
-
-    # matrix with inverse square roots of masses on diagonal
-    M_invsqrt = np.zeros((ndof, ndof), dtype=float)
-    np.fill_diagonal(M_invsqrt, np.repeat(1.0 / np.sqrt(masses * prm), 3))
-
-    # matrix with inverse masses
+    # matrix with inverse masses on diagonal
     M_inv = np.zeros((ndof, ndof), dtype=float)
     np.fill_diagonal(M_inv, np.repeat(1.0 / (masses * prm), 3))
 
     Gmatrix = np.dot(Bmatrix, np.dot(M_inv, Bmatrix.T))
     Gmatrix_inv = np.linalg.pinv(Gmatrix)
 
-    mwevecs = np.dot(M_invsqrt, normal_modes)
+    mwevecs = np.dot(np.sqrt(M_inv), normal_modes)
 
     Bmatrix_inv = np.dot(M_inv, np.dot(Bmatrix.T, Gmatrix_inv))
 
@@ -147,15 +167,12 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
     mi['effective_mass'] = 1.0 / np.einsum('ij,ji->i', mwevecs.T, mwevecs)
 
     # calculate the megnitude of the displacement for all the modes
-    mi.loc[mi['is_stretch'], 'displacement'] = 8.0 / np.sqrt(2.0 * pi *
-                        np.abs(freqs[mi['is_stretch'].values]))
-    mi.loc[~mi['is_stretch'], 'displacement'] = 4.0 / np.sqrt(2.0 * pi *
-                        np.abs(freqs[~mi['is_stretch'].values]))
+    mi.loc[mi['is_stretch'], 'displacement'] = \
+        8.0 / np.sqrt(2.0 * pi * np.abs(freqs[mi['is_stretch'].values]))
+    mi.loc[~mi['is_stretch'], 'displacement'] = \
+        4.0 / np.sqrt(2.0 * pi * np.abs(freqs[~mi['is_stretch'].values]))
     mi['displacement'] = mi['displacement'] / (npoints * 2.0)
     mi.to_pickle('modeinfo.pkl')
-
-    if verbose:
-        print_modeinfo(mi)
 
     if isinstance(modes, string_types):
         if modes.lower() in ['all', ':']:
@@ -163,7 +180,7 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
         else:
             modes = expandrange(modes)
     elif isinstance(modes, (list, tuple)):
-        pass
+        raise NotImplementedError('not available yet')
     else:
         ValueError('<modes> should be a str, list or tuple '
                    'got: {}'.format(type('modes')))
@@ -178,11 +195,11 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
 
             for sign in [1, -1]:
                 for point in range(1, npoints + 1):
-                    if verbose:
-                        line = ' mode : {0:d} '.format(mode) +\
-                               ' nu : {1:.4f} '.format(nu) +\
-                               ' point : {1:d} '.format(point * sign)
-                        print(line.center(80, '*'))
+                    # debug
+                    line = ' mode : {0:d} '.format(mode) +\
+                           ' nu : {0:.4f} '.format(nu) +\
+                           ' point : {0:d} '.format(point * sign)
+                    log.debug(line.center(80, '*'))
 
                     # equilibrium structure
                     coords = pos.ravel().copy() * ang2bohr
@@ -201,19 +218,15 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
                         # update atoms with new coords
                         newatoms = atoms.copy()
                         newatoms.set_positions(coords.reshape(natoms, 3) / ang2bohr)
-                        internals_new, Bmatrix = get_internals(newatoms,
-                                                        return_bmatrix=True)
 
-                        mask = internals_new['value'] < 0.0
-                        internals_new['value'][mask] = 2 * pi + internals_new['value'][mask]
+                        internals_new, Bmatrix = get_internals_and_bmatrix(newatoms)
 
-                        if verbose:
-                            print('internals'.center(80, '-'))
-                            for row in internals_new:
-                                print('{0:5s} {1:20.10f}'.format(row['type'], row['value']))
+                        # debug
+                        log.debug('internals'.center(80, '-'))
+                        for row in internals_new:
+                            log.debug('{0:5s} {1:20.10f}'.format(row['type'], row['value']))
 
                         delta_int = internal_coord_disp - (internals_new['value'] - internals['value'])
-
                         disp_norm = np.sqrt(np.dot(delta_int, delta_int))
 
                         if iteration == 1:
@@ -245,7 +258,7 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
                     newatoms.set_positions(coords.reshape(natoms, 3) / ang2bohr)
                     images[mode][sign * point] = newatoms
 
-    with open('images.pkl', 'w') as fpkl:
+    with open('images.pkl', 'wb') as fpkl:
         pickle.dump(images, fpkl)
 
     return images, mi
