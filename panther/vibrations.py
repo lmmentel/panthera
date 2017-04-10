@@ -1,7 +1,7 @@
 
 from __future__ import print_function, division
 
-from scipy.constants import elementary_charge, value, pi, speed_of_light
+from scipy.constants import value
 import numpy as np
 
 from .thermochemistry import constraints2mask
@@ -69,7 +69,7 @@ def project_massweighted(args, atoms, ndof, hessian, verbose=False):
     #Pmat = np.dot(Dmat, Dmat.T)
 
     #print('INFO: Orthogonalizing Pmat: ', Dmat.shape)
-    #U, s, V = np.linalg.svd(Pmat) 
+    #U, s, V = np.linalg.svd(Pmat)
     #Pmat = np.dot(U, V)
 
     # project the mass weighted hessian (MWH) using (1 - P) * MWH * (1 - P)

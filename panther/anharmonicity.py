@@ -148,58 +148,59 @@ def anharmonic_frequencies(atoms, T, coeffs, modeinfo):
     invcm2au = 100 * value('inverse meter-hartree relationship')
     kT = Boltzmann * T
 
-    df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'converged', 'info', 'rank', 'type', 'd_qvib', 'd_nu'],
+    df = pd.DataFrame(columns=['freq', 'zpve', 'qvib', 'U', 'S', 'converged',
+                               'info', 'rank', 'type', 'd_qvib', 'd_nu'],
                       index=modeinfo[modeinfo['vibration']].index, dtype=float)
 
     for mode, row in coeffs.iterrows():
 
-            terminate = False
-            rank = 4
-            niter = 0
-            qvib_last = 0.0
-            freq_last = 0.0
+        terminate = False
+        rank = 4
+        niter = 0
+        qvib_last = 0.0
+        freq_last = 0.0
 
-            while not terminate:
+        while not terminate:
 
-                # get polynomial coefficients
-                if row.shape[0] == 7:
-                    pc = row.values[::-1].astype(float)
-                elif row.shape[0] == 5:
-                    pc = np.append(row.values[::-1], np.zeros(2)).astype(float)
+            # get polynomial coefficients
+            if row.shape[0] == 7:
+                pc = row.values[::-1].astype(float)
+            elif row.shape[0] == 5:
+                pc = np.append(row.values[::-1], np.zeros(2)).astype(float)
 
-                hamil = get_hamiltonian(rank, modeinfo.loc[mode, 'frequency'] * invcm2au,
-                                        modeinfo.loc[mode, 'effective_mass'], pc)
+            hamil = get_hamiltonian(rank, modeinfo.loc[mode, 'frequency'] * invcm2au,
+                                    modeinfo.loc[mode, 'effective_mass'], pc)
 
-                w, v = np.linalg.eig(hamil)
-                w = np.sort(w)
-                qvib = np.sum(np.exp(-w * au2joule / kT))
+            w, v = np.linalg.eig(hamil)
+            w = np.sort(w)
+            qvib = np.sum(np.exp(-w * au2joule / kT))
 
-                anhfreq = (w[1] - w[0]) / invcm2au
-                zpve = w[0] * au2joule * 1.0e-3 * Avogadro
-                U, S = get_anh_state_functions(w * au2joule, T)
+            anhfreq = (w[1] - w[0]) / invcm2au
+            zpve = w[0] * au2joule * 1.0e-3 * Avogadro
+            U, S = get_anh_state_functions(w * au2joule, T)
 
-                d_qvib = np.abs(qvib - qvib_last)
-                d_nu = np.abs(w[0] - freq_last)
+            d_qvib = np.abs(qvib - qvib_last)
+            d_nu = np.abs(w[0] - freq_last)
 
-                terminate = (d_qvib < QVIB_THRESH) & (d_nu < FREQ_THRESH)
+            terminate = (d_qvib < QVIB_THRESH) & (d_nu < FREQ_THRESH)
 
-                if terminate:
-                    if anhfreq < modeinfo.loc[mode, 'frequency']:
-                        anh = (anhfreq, zpve, qvib, U, S, True, 'OK', rank, 'A', d_qvib, d_nu)
-                    else:
-                        anh = (anhfreq, zpve, qvib, U, S, True, 'AGTH', rank, 'A', d_qvib, d_nu)
+            if terminate:
+                if anhfreq < modeinfo.loc[mode, 'frequency']:
+                    anh = (anhfreq, zpve, qvib, U, S, True, 'OK', rank, 'A', d_qvib, d_nu)
                 else:
-                    rank += 1
-                    qvib_last = qvib
-                    freq_last = w[0]
+                    anh = (anhfreq, zpve, qvib, U, S, True, 'AGTH', rank, 'A', d_qvib, d_nu)
+            else:
+                rank += 1
+                qvib_last = qvib
+                freq_last = w[0]
 
-                    if niter >= MAXITER:
-                        anh = (anhfreq, zpve, qvib, U, S, False, 'MAXITER', rank, 'A', d_qvib, d_nu)
-                        break
+                if niter >= MAXITER:
+                    anh = (anhfreq, zpve, qvib, U, S, False, 'MAXITER', rank, 'A', d_qvib, d_nu)
+                    break
 
-                niter += 1
+            niter += 1
 
-            df.loc[mode] = anh
+        df.loc[mode] = anh
 
     df['rank'] = df['rank'].fillna(0).astype(int)
     return df
