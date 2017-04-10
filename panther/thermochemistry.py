@@ -318,12 +318,18 @@ class Thermochemistry(BaseThermochemistry):
     ----------
     vibenergies : numpy.array
         Vibrational energies in Joules
+
     atoms : ase.Atoms
         Atoms obect
+
     phase : str
         Phase, should be either `gas` or `solid`
+
     pointgroup : str
+
     symmetrynumber : str
+        If `pointgroup` is specified `symmetrynumber` is obsolete, since
+        it will be inferred from the `pointgroup`
     '''
 
     def __init__(self, vibenergies, atoms, *args, **kwargs):
