@@ -13,7 +13,6 @@ import six
 import sys
 
 from collections import defaultdict, OrderedDict
-from lxml.etree import parse
 
 import numpy as np
 import pandas as pd
@@ -228,6 +227,7 @@ def read_vasp_hessian_xml(xml='vasprun.xml', convert_to_au=True,
 
     '''
 
+    from lxml.etree import parse
     from ase.units import Hartree, Bohr
 
     doc = parse(xml)
