@@ -1,4 +1,5 @@
 ase
+lxml
 numpy
 numpydoc
 pandas
