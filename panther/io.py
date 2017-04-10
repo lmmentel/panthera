@@ -5,12 +5,12 @@ Module providing functions for reading the input and other related files
 
 from __future__ import print_function, absolute_import, division
 
-import re
 import argparse
-import os
-import sys
 import io
+import os
+import re
 import six
+import sys
 
 from collections import defaultdict, OrderedDict
 from lxml.etree import parse
@@ -83,8 +83,8 @@ def get_symmetry_number(pointgroup):
     Return the symmetry number for a given point group
 
     .. seealso::
-       C. J. Cramer, `Essentials of Computational Chemistry, Theories and Models`,
-       2nd Edition, p. 363
+       C. J. Cramer, `Essentials of Computational Chemistry, Theories
+       and Models`, 2nd Edition, p. 363
 
     Parameters
     ----------
