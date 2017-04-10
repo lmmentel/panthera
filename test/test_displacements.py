@@ -4,14 +4,11 @@ import os
 import numpy as np
 
 import ase.io
+from ase import units
 
 from panther.vibrations import harmonic_vibrational_analysis
 from panther.displacements import calculate_displacements
 
-from scipy.constants import angstrom, value
-
-ang2bohr = angstrom / value('atomic unit of length')
-ev2hartree = value('electron volt-hartree relationship')
 
 cwd = os.path.abspath(os.path.dirname(__file__))
 
@@ -25,7 +22,7 @@ def test_displacements_meoh(tmpdir):
     # the hessian is in the same form as in the OUCAR file
     hessian = np.load(os.path.join(cwd, 'data/meoh_hessian_raw.npy'))
     hessian = (hessian + hessian.T) * 0.5
-    hessian = hessian * ev2hartree / (ang2bohr**2)
+    hessian = hessian * units.Bohr**2 / units.Hartree
     hessian = -1 * hessian
 
     freqs, normal_modes = harmonic_vibrational_analysis(hessian, meoh,
