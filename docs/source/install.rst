@@ -12,6 +12,7 @@ Dependencies
     - `future <https://pypi.python.org/pypi/future>`_
     - `six <https://pypi.python.org/pypi/six>`_
     - `writeBmat <https://bitbucket.org/lukaszmentel/writebmat>`_
+    - `lxml <http://lxml.de/>`_
 
 The recommended installation method is with pip_. The latest version
 can be installed directly from `bitbucket repository`_:
