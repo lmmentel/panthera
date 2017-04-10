@@ -3,8 +3,9 @@ from __future__ import print_function
 
 import numpy as np
 import pandas as pd
-from scipy.constants import value
 from six import string_types
+
+from ase import units
 
 
 def expandrange(modestr):
@@ -70,7 +71,8 @@ def calculate_energies(images, calc, modes='all'):
 
     for mode in modes:
         for point in images[mode].keys():
-            print('# calculating energy for mode: {} point: {}'.format(mode, point))
+            print('# calculating energy for mode: {} point: {}'.format(mode,
+                                                                       point))
             atoms = images[mode][point]
             atoms.set_calculator(calc)
             energy = atoms.get_potential_energy()
@@ -100,17 +102,20 @@ def fit_potentials(modeinfo, energies):
     '''
 
     energies = energies.subtract(energies['E_0'], axis=0)
-    energies = energies * value('electron volt-hartree relationship')
+    energies = energies / units.Hartree
     E = energies.as_matrix()
 
-    D = np.dot(modeinfo['displacement'].values.reshape(-1, 1), np.arange(-4, 5).reshape(1, -1))
+    D = np.dot(modeinfo['displacement'].values.reshape(-1, 1),
+               np.arange(-4, 5).reshape(1, -1))
     D = D / np.sqrt(modeinfo['effective_mass'].values).reshape(-1, 1)
     D = D.astype(float)
 
     coeffs6o = pd.DataFrame(index=energies.index,
-                            columns=['c_' + str(x) for x in np.arange(6, -1, -1)])
+                            columns=['c_' + str(x)
+                                     for x in np.arange(6, -1, -1)])
     coeffs4o = pd.DataFrame(index=energies.index,
-                            columns=['c_' + str(x) for x in np.arange(4, -1, -1)])
+                            columns=['c_' + str(x)
+                                     for x in np.arange(4, -1, -1)])
 
     for i in energies.index:
         coeffs4o.loc[i] = np.polyfit(D[i], E[i], deg=4)
@@ -141,7 +146,7 @@ def differentiate(displacements, energies, order=2):
     '''
 
     energies = energies.subtract(energies['E_0'], axis=0)
-    energies = energies * value('electron volt-hartree relationship')
+    energies = energies / units.Hartree
     E = energies.as_matrix()
 
     cols = ['p2', 'p4', 'p6', 'p8']
@@ -179,11 +184,16 @@ def harmonic_potential(x, freq, mu):
     ----------
     x : float of numpy.array
         Coordinate
+
     mu : float
         Reduced mass
+
     freq : float
         Frequency in cm^-1
     '''
 
-    kconst = mu * (freq * 100.0 * value('inverse meter-hartree relationship'))**2
+    # conversion factor from cm^-1 to hartrees
+    conv = 100.0 * units.J * units._hplanck * units._c / units.Hartree
+
+    kconst = mu * (freq * conv)**2
     return 0.5 * kconst * x**2
