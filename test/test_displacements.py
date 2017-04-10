@@ -43,4 +43,5 @@ def test_displacements_meoh(tmpdir):
 
     for mode in images.keys():
         for point in images[mode].keys():
-            assert np.allclose(images[mode][point].positions, refimages[mode][point].positions)
+            assert np.allclose(images[mode][point].positions,
+                               refimages[mode][point].positions)

@@ -1,14 +1,9 @@
 
 from __future__ import print_function, division
 
-from scipy.constants import value
 import numpy as np
-
+from ase import units
 from .thermochemistry import constraints2mask
-
-# conversion fator from eV/A^2 to cm^-1
-#vasp2invcm = 1.0e8 * np.sqrt(elementary_charge)\
-#            / (np.sqrt(value('atomic mass constant')) * 2.0 * pi * speed_of_light)
 
 
 def get_levicivita():
@@ -195,18 +190,23 @@ def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
     Parameters
     ----------
     hessian : array_like
-        Force constant (Hessian) matrix, should be square and symmetrized
-        and converted to atomic units
+        Force constant (Hessian) matrix in atomic units, should be
+        square and symmetrized
+
     atoms : Atoms
         ASE atoms object
+
     proj_translations : bool
         If ``True`` translational degrees of freedom will be projected from
         the hessian
+
     proj_rotations : bool
         If ``True`` rotational degrees of freedom will be projected from
         the hessian
+
     massau : bool
-        If True atomic units of mass will be used
+        If ``True`` atomic units of mass will be used
+
     ascomplex : bool
         If there are complex eigenvalues return the array as complex type
         otherwise make the complex values negative and return array of reals
@@ -231,16 +231,14 @@ def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
                           proj_rotations=proj_rotations,
                           verbose=False)
 
-    # create the mass vector, with the masses for each atom repeated 3 times
-    # and convert to atomic units
+    # create the mass vector, with the masses for each atom repeated 3
+    # times and convert to atomic units
     unitconv = 1.0
     if massau:
-        unitconv = 1.0 / value('electron mass in u')
-    masses = np.repeat(atoms.get_masses(), 3) * unitconv
+        unitconv = units._amu / units._me
 
-    # calculate the mass weighted hessian
-    masssqrt = np.diag(np.sqrt(1.0 / masses))
-    mwhessian = np.dot(masssqrt, np.dot(hessian, masssqrt))
+    massvec = np.repeat(1.0 / np.sqrt(atoms.get_masses() * unitconv), 3)
+    mwhessian = np.multiply(hessian, np.outer(massvec, massvec))
 
     # diagonalize the projected hessian to get the squared frequencies and
     # normal modes
