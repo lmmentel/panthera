@@ -2,7 +2,7 @@ import os
 import numpy as np
 from scipy.constants import angstrom, value
 
-from panther.io import read_vasp_hessian
+from panther.io import read_vasp_hessian, read_vasp_hessian_xml
 
 
 ang2bohr = angstrom / value('atomic unit of length')
@@ -56,6 +56,12 @@ def test_read_vasp_hessian_hcha():
 
 def test_read_vasp_hessian_xml():
 
+    vaspxml = os.path.join(cwd, 'data/hcha.vasprun.xml')
+    hessian = read_vasp_hessian_xml(vaspxml, convert_to_au=False,
+                                    stripmass=True)
+
     refhessian = np.load(os.path.join(cwd, 'data/hcha_hessian.npy'))
 
-    vaspxml = os.path.join(cwd, 'data/hcha.xml')
+    refhessian = (refhessian + refhessian.T) * -0.5
+
+    assert np.allclose(refhessian, hessian, atol=1.0e-6)
