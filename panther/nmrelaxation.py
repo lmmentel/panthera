@@ -19,21 +19,29 @@ class NormalModeBFGS(Optimizer, object):
     Parameters
     ----------
     atoms : ase.Atoms
+        Atoms object with the structure to optimize
+
     phase : str
         Phase, should be either `gas` or `solid`
+
     hessian : array_like (N, N)
-        Initial hessian matrix
+        Initial hessian matrix in eV/Angstrom^2
+
     hessian_update : str
         Name of the approximate formula to udpate hessian, one of: `BFGS`,
         `SR1`, `DFP`
+
     proj_translations : bool
         If ``True`` translational degrees of freedom will be projected from
         the hessian
+
     proj_rotations : bool
         If ``True`` rotational degrees of freedom will be projected from
         the hessian
+
     logfile : str
         Name log the log file
+
     trajectory : str
         Name of the trajectory file
     '''
@@ -115,6 +123,7 @@ class NormalModeBFGS(Optimizer, object):
         ----------
         coords : array_like (N,)
             Current coordinates as vector
+
         grad : array_like (N,)
             Current gradient
         '''
@@ -229,19 +238,27 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
     Parameters
     ----------
     atoms : ase.Atoms
+        Atoms object with the structure to optimize
+
     hessian : array_like
         Hessian matrix in eV/Angstrom^2
+
     calc : ase.Calculator
         ASE Calcualtor instance to be used to calculate forces
+
     phase : str
         Phase, 'solid' or 'gas'
+
     gtol : float, default=1.0e-5
         Energy gradient threshold
+
     hessian_update : str
         Approximate formula to update hessian, possible values are 'BFGS',
         'SR1' and 'DFP'
+
     steps : int
         Maximal number of iteration to be performed
+
     verbose : bool
         If ``True`` additional debug information will be printed
 
