@@ -191,7 +191,7 @@ def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
     ----------
     hessian : array_like
         Force constant (Hessian) matrix in atomic units, should be
-        square and symmetrized
+        square and symmetric
 
     atoms : Atoms
         ASE atoms object
