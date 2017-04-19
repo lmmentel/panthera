@@ -253,7 +253,7 @@ def read_vasp_hessian_xml(xml='vasprun.xml', convert_to_au=True,
         hess_size = index.size
     else:
         # complete hessian calculation
-        index = np.repeat(np.arange(natoms, dtype=int), 3)
+        index = np.arange(dof, dtype=int)
         hess_size = dof
 
     hessian = np.zeros((hess_size, hess_size), dtype=float)
