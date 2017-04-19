@@ -1,12 +1,11 @@
 import os
 import numpy as np
-from scipy.constants import angstrom, value
+
+from ase.units import Hartree, Bohr
 
 from panther.io import read_vasp_hessian, read_vasp_hessian_xml
 
 
-ang2bohr = angstrom / value('atomic unit of length')
-ev2hartree = value('electron volt-hartree relationship')
 cwd = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -28,7 +27,7 @@ def test_read_vasp_hessian_meoh():
 
     # converted to au
     hessian = read_vasp_hessian(outcar, symmetrize=False, convert_to_au=True)
-    assert np.allclose(-1.0 * (refhessian * ev2hartree / (ang2bohr**2)),
+    assert np.allclose(-1.0 * (refhessian * Bohr**2 / Hartree),
                        hessian)
 
 
@@ -50,7 +49,7 @@ def test_read_vasp_hessian_hcha():
 
     # converted to au
     hessian = read_vasp_hessian(outcar, symmetrize=False, convert_to_au=True)
-    assert np.allclose(-1.0 * (refhessian * ev2hartree / (ang2bohr**2)),
+    assert np.allclose(-1.0 * (refhessian * Bohr**2 / Hartree),
                        hessian)
 
 
