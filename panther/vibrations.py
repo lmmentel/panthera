@@ -231,13 +231,14 @@ def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
                           proj_rotations=proj_rotations,
                           verbose=False)
 
-    # create the mass vector, with the masses for each atom repeated 3
-    # times and convert to atomic units
-    unitconv = 1.0
-    if massau:
-        unitconv = units._amu / units._me
+    # create the mass vector, with the masses for each atom repeated 3 times
+    # and convert to atomic units
 
-    massvec = np.repeat(1.0 / np.sqrt(atoms.get_masses() * unitconv), 3)
+    masses = np.repeat(atoms.get_masses(), 3)
+    if massau:
+        masses *= units._amu / units._me
+
+    massvec = 1.0 / np.sqrt(atoms.get_masses())
     mwhessian = np.multiply(hessian, np.outer(massvec, massvec))
 
     # diagonalize the projected hessian to get the squared frequencies and
