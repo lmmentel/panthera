@@ -238,7 +238,7 @@ def harmonic_vibrational_analysis(hessian, atoms, proj_translations=True,
     if massau:
         masses *= units._amu / units._me
 
-    massvec = 1.0 / np.sqrt(atoms.get_masses())
+    massvec = 1.0 / np.sqrt(masses)
     mwhessian = np.multiply(hessian, np.outer(massvec, massvec))
 
     # diagonalize the projected hessian to get the squared frequencies and
