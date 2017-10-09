@@ -40,7 +40,7 @@ panther.displacements module
     :show-inheritance:
 
 panther.io module
-==========================
+=================
 
 .. automodule:: panther.io
     :members:
