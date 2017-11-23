@@ -100,8 +100,8 @@ def main():
 
         for temp in temperature_range(conditions):
 
-            df6 = anharmonic_frequencies(atoms, temp, job, system, fname='em_freq')
-            df4 = anharmonic_frequencies(atoms, temp, job, system, fname='em_freq_4th')
+            df6 = anharmonic_frequencies(atoms, temp, )
+            df4 = anharmonic_frequencies(atoms, temp, )
 
             df = merge_vibs(df6, df4, temp)
 
