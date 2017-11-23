@@ -22,9 +22,8 @@ if sys.version_info.major == 3:
 else:
     from mock import Mock as Mock     # if python ver 2.7
 
-MOCK_MODULES = ['argparse', 'ase', 'ase.io', 'ase.io.trajectory',
-                'ase.io.vasp', 'ase.optimize', 'ase.optimize.optimize',
-                'numpy', 'numpy.ma', 'numpy.linalg', 'matplotlib',
+MOCK_MODULES = ['argparse',
+                'matplotlib',
                 'matplotlib.pyplot', 'scipy', 'scipy.constants',
                 'scipy.optimize', 'scipy.linalg', 'pandas', 'seaborn',
                 'writeBmat']
