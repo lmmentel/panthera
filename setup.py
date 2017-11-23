@@ -10,6 +10,12 @@ def readme():
         return freadme.read()
 
 
+def from_requirements():
+    'Return a list of requirements from a file'
+    with open('panther_requirements.txt', 'r') as freq:
+        return freq.read().splitlines()
+
+
 setup(
     author="Lukasz Mentel",
     author_email="lmmentel@gmail.com",
@@ -22,6 +28,7 @@ setup(
             'writemodes = panther.cli:write_modes_cli',
         ]
     },
+    install_requires=from_requirements(),
     license=open('LICENSE.rst').read(),
     long_description=readme(),
     name='panther',
