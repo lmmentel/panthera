@@ -35,11 +35,8 @@ for mod_name in MOCK_MODULES:
 __location__ = os.path.join(os.getcwd(), os.path.dirname(
     inspect.getfile(inspect.currentframe())))
 
-#output_dir = os.path.join(__location__, "_reference")
-module_dir = os.path.join(__location__, "../../panther")
-#cmd_line_template = "sphinx-apidoc -f --separate -o {outputdir} {moduledir}"
-#cmd_line = cmd_line_template.format(outputdir=output_dir, moduledir=module_dir)
-#apidoc.main(cmd_line.split(" "))
+module_dir = os.path.join(__location__, "../../")
+sys.path.insert(0, os.path.abspath(module_dir))
 
 autosummary_generate = True
 
@@ -48,9 +45,7 @@ numpydoc_show_class_members = False
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
 
-sys.path.insert(0, os.path.abspath(os.path.basename(module_dir)))
 
 # -- General configuration ------------------------------------------------
 
