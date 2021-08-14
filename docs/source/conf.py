@@ -26,7 +26,7 @@ MOCK_MODULES = ['argparse',
                 'matplotlib',
                 'matplotlib.pyplot', 'scipy', 'scipy.constants',
                 'scipy.optimize', 'scipy.linalg', 'pandas', 'seaborn',
-                'writeBmat']
+                'bmatrix']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = Mock()
