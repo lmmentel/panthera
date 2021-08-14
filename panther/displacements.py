@@ -11,7 +11,7 @@ from six import string_types
 
 from ase import units
 
-from writeBmat import get_internals, get_bmatrix
+from bmatrix import get_internals, get_bmatrix
 
 from .pes import expandrange
 

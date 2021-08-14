@@ -11,11 +11,11 @@ Dependencies
     - `seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_
     - `future <https://pypi.python.org/pypi/future>`_
     - `six <https://pypi.python.org/pypi/six>`_
-    - `writeBmat <https://bitbucket.org/lukaszmentel/writebmat>`_ based on the approach presented in [1]_
+    - `bmatrix <https://github.com/lmmentel/bmatrix>`_ based on the approach presented in [1]_
     - `lxml <http://lxml.de/>`_
 
 The recommended installation method is with pip_. The latest version
-can be installed directly from `bitbucket repository`_:
+can be installed directly from `github repository`_:
 
 .. code-block:: bash
 
@@ -33,7 +33,7 @@ and installed via
 
    pip install -U [--user] ./panther
 
-.. _bitbucket repository: https://bitbucket.org/lukaszmentel/panther
+.. _github repository: https://github.com/lmmentel/panther
 .. _pip: https://pip.pypa.io/en/stable/
 
 .. [1] Bučko, T., Hafner, J., & Ángyán, J. G. (2005). Geometry optimization of
