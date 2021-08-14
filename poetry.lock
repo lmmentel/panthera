@@ -99,6 +99,25 @@ python2 = ["typed-ast (>=1.4.2)"]
 uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
+name = "bmatrix"
+version = "1.0.1"
+description = "Package with tools for generating internal coordiantes and the corresponding B matrix for molecules and for periodic systems."
+category = "main"
+optional = false
+python-versions = ">=3.8,<3.10"
+develop = false
+
+[package.dependencies]
+numpy = "^1.21.1"
+scipy = "^1.7.1"
+
+[package.source]
+type = "git"
+url = "https://github.com/lmmentel/bmatrix.git"
+reference = "main"
+resolved_reference = "1b3b6cab2f4a213caf1803d75548471e11934f4f"
+
+[[package]]
 name = "bump2version"
 version = "1.0.1"
 description = "Version-bump your software with a single command!"
@@ -679,7 +698,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "cee327042fddb0ce080afe01ba3e6464abe9e258ea9e3874db04c2ed80360520"
+content-hash = "28a6d2e3c8c66b67a20fd2f4b8f271de9a0591f8efd1b45f2e9503ffd284a835"
 
 [metadata.files]
 alabaster = [
@@ -714,6 +733,7 @@ black = [
     {file = "black-21.7b0-py3-none-any.whl", hash = "sha256:1c7aa6ada8ee864db745b22790a32f94b2795c253a75d6d9b5e439ff10d23116"},
     {file = "black-21.7b0.tar.gz", hash = "sha256:c8373c6491de9362e39271630b65b964607bc5c79c83783547d76c839b3aa219"},
 ]
+bmatrix = []
 bump2version = [
     {file = "bump2version-1.0.1-py2.py3-none-any.whl", hash = "sha256:37f927ea17cde7ae2d7baf832f8e80ce3777624554a653006c9144f8017fe410"},
     {file = "bump2version-1.0.1.tar.gz", hash = "sha256:762cb2bfad61f4ec8e2bdf452c7c267416f8c70dd9ecb1653fd0bbb01fa936e6"},
