@@ -62,14 +62,13 @@ def main():
 
     if args.command == "harmonic":
 
-        if job["code"] == "VASP":
-            atoms = read_vasp_out("OUTCAR", index=0)
-            hessian = read_vasp_hessian("OUTCAR", symmetrize=True, convert_to_au=True)
-        else:
+        if job["code"] != "VASP":
             raise NotImplementedError(
                 "Code {} is not supported yet.".format(job["code"])
             )
 
+        atoms = read_vasp_out("OUTCAR", index=0)
+        hessian = read_vasp_hessian("OUTCAR", symmetrize=True, convert_to_au=True)
         freqs, normal_modes = harmonic_vibrational_analysis(
             hessian, atoms, job["proj_translations"], job["proj_rotations"]
         )

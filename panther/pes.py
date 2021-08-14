@@ -58,9 +58,7 @@ def calculate_energies(images, calc, modes="all"):
             modes = range(len(images))
         else:
             modes = expandrange(modes)
-    elif isinstance(modes, (list, tuple)):
-        pass
-    else:
+    elif not isinstance(modes, (list, tuple)):
         ValueError(
             "<modes> should be a str, list or tuple " "got: {}".format(type("modes"))
         )

@@ -236,6 +236,7 @@ def calculate_displacements(
 
         if nu < FREQ_THRESH and nu > 0.0:
 
+            not_converged = True
             for sign in [1, -1]:
                 for point in range(1, npoints + 1):
                     # debug
@@ -259,7 +260,6 @@ def calculate_displacements(
                     coords_init = coords.copy()
 
                     iteration = 1
-                    not_converged = True
                     while not_converged:
                         # update atoms with new coords
                         newatoms = atoms.copy()

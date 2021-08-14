@@ -108,7 +108,7 @@ def project(
     if verbose:
         print("INFO: CARTESIAN coordinates")
         for row in atoms.get_positions():
-            print("".join(["{0:15.8f}".format(x) for x in row]))
+            print("".join("{0:15.8f}".format(x) for x in row))
 
     uatoms = atoms.copy()
     uatoms.set_masses(np.ones(len(atoms), dtype=float))
@@ -133,7 +133,7 @@ def project(
         if verbose:
             print("INFO: Projecting out translations")
             for row in Dmat:
-                print("".join(["{0:15.8f}".format(x) for x in row]))
+                print("".join("{0:15.8f}".format(x) for x in row))
 
     if proj_rotations:
 
@@ -157,17 +157,17 @@ def project(
     # orthogonalize
     if proj_translations and proj_rotations:
         q, _ = np.linalg.qr(Dmat)
-    elif proj_translations and not proj_rotations:
+    elif proj_translations:
         q, _ = np.linalg.qr(Dmat[:, :3])
         q = np.hstack((q, Dmat[:, 3:]))
-    elif not proj_translations and proj_rotations:
+    elif proj_rotations:
         q, _ = np.linalg.qr(Dmat[:, 3:])
         q = np.hstack((Dmat[:, :3], q))
 
     if verbose:
         print("INFO: ORTHOGONALIZED Dmat")
         for row in q:
-            print("".join(["{0:15.8f}".format(x) for x in row]))
+            print("".join("{0:15.8f}".format(x) for x in row))
 
     I = np.eye(q.shape[0])
 
@@ -263,9 +263,8 @@ def harmonic_vibrational_analysis(
 
     if ascomplex:
         return wals, vecs
-    else:
-        mask = np.iscomplex(wals)
-        wreal = np.zeros_like(wals, dtype=float)
-        wreal[~mask] = wals[~mask].real
-        wreal[mask] = -1.0 * np.abs(wals[mask].imag)
-        return wreal, vecs
+    mask = np.iscomplex(wals)
+    wreal = np.zeros_like(wals, dtype=float)
+    wreal[~mask] = wals[~mask].real
+    wreal[mask] = -1.0 * np.abs(wals[mask].imag)
+    return wreal, vecs

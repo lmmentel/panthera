@@ -77,9 +77,8 @@ def get_total_mass(atoms):
     atmass = value("atomic mass unit-kilogram relationship")
     if len(atoms.constraints) == 0:
         return np.sum(atoms.get_masses()) * atmass
-    else:
-        mask = constraints2mask(atoms)
-        return np.sum(atoms.get_masses()[np.any(mask, axis=1)]) * atmass
+    mask = constraints2mask(atoms)
+    return np.sum(atoms.get_masses()[np.any(mask, axis=1)]) * atmass
 
 
 class BaseThermochemistry(object):
@@ -135,29 +134,27 @@ class BaseThermochemistry(object):
 
         """
 
-        if self.phase == "gas":
-            # calculate the moments of ineria and convert them to [kg*m^2]
-            atmass = value("atomic mass unit-kilogram relationship")
-            I = (
-                self.atoms.get_moments_of_inertia(vectors=False)
-                * atmass
-                * np.power(10.0, -20)
-            )
-
-            sigma = self.symmetrynumber
-            if self.pointgroup in ["Coov", "Dooh"]:
-                return 2.0 * np.max(I) * Boltzmann * T / (sigma * hbar ** 2)
-            else:
-                return (
-                    np.sqrt(
-                        pi
-                        * np.product(I)
-                        * np.power(2.0 * Boltzmann * T / hbar ** 2, 3)
-                    )
-                    / sigma
-                )
-        else:
+        if self.phase != "gas":
             return 0.0
+
+        # calculate the moments of ineria and convert them to [kg*m^2]
+        atmass = value("atomic mass unit-kilogram relationship")
+        I = (
+            self.atoms.get_moments_of_inertia(vectors=False)
+            * atmass
+            * np.power(10.0, -20)
+        )
+
+        sigma = self.symmetrynumber
+        if self.pointgroup in ["Coov", "Dooh"]:
+            return 2.0 * np.max(I) * Boltzmann * T / (sigma * hbar ** 2)
+        else:
+            return (
+                np.sqrt(
+                    pi * np.product(I) * np.power(2.0 * Boltzmann * T / hbar ** 2, 3)
+                )
+                / sigma
+            )
 
     def get_qtranslational(self, T=273.15, p=0.1):
         """
@@ -291,13 +288,13 @@ class BaseThermochemistry(object):
         Rotational heat capacity
         """
 
-        if self.phase == "gas":
-            if self.pointgroup in ["Coov", "Dooh"]:
-                return gas_constant * 1.0e-3
-            else:
-                return 1.5 * gas_constant * 1.0e-3
-        else:
+        if self.phase != "gas":
             return 0.0
+
+        if self.pointgroup in ["Coov", "Dooh"]:
+            return gas_constant * 1.0e-3
+        else:
+            return 1.5 * gas_constant * 1.0e-3
 
     def summary(self, T=273.15, p=0.1):
         """

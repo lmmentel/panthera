@@ -249,15 +249,13 @@ class NormalModeBFGS(Optimizer, object):
         *steps*."""
 
         self.fmax = fmax
-        step = 0
-        while step < steps:
+        for _ in range(steps):
             f = self.atoms.get_forces()
             self.call_observers()
             if self.converged(f):
                 return
             self.step(f)
             self.nsteps += 1
-            step += 1
 
     def read(self):
         self.hessian, self.coords_0, self.grad_0 = self.load()

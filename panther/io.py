@@ -58,19 +58,16 @@ def parse_arguments():
     config = cp.ConfigParser(defaults=defaults, allow_no_value=True)
     config.read(args.config)
 
-    conditions = {}
-    conditions["Tinitial"] = config.getfloat("conditions", "Tinitial")
+    conditions = {"Tinitial": config.getfloat("conditions", "Tinitial")}
     conditions["Tfinal"] = config.getfloat("conditions", "Tfinal")
     conditions["Tstep"] = config.getfloat("conditions", "Tstep")
     conditions["pressure"] = config.getfloat("conditions", "pressure")
 
-    job = {}
-    job["proj_translations"] = config.getboolean("job", "translations")
+    job = {"proj_translations": config.getboolean("job", "translations")}
     job["proj_rotations"] = config.getboolean("job", "rotations")
     job["code"] = config.get("job", "code")
 
-    system = {}
-    system["phase"] = config.get("system", "phase")
+    system = {"phase": config.get("system", "phase")}
     system["pointgroup"] = config.get("system", "pointgroup")
     system["symmetrynumber"] = get_symmetry_number(system["pointgroup"])
 
@@ -106,24 +103,23 @@ def get_symmetry_number(pointgroup):
     dpatt = re.compile(r"D(\d+)[dh]?")
     spatt = re.compile(r"S(\d+)")
 
-    if pointgroup in symmetrynumbers.keys():
+    if pointgroup in symmetrynumbers:
         return symmetrynumbers[pointgroup]
-    else:
-        mc = cpatt.match(pointgroup)
-        md = dpatt.match(pointgroup)
-        ms = spatt.match(pointgroup)
+    mc = cpatt.match(pointgroup)
+    md = dpatt.match(pointgroup)
+    ms = spatt.match(pointgroup)
 
-        if mc:
-            return int(mc.group(1))
-        elif md:
-            return 2 * int(md.group(1))
-        elif ms:
-            return int(ms.group(1)) // 2
-        else:
-            raise ValueError(
-                'Point group label "{}" unknown, cannot assign '
-                "a rotational symmetry number".format(pointgroup)
-            )
+    if mc:
+        return int(mc.group(1))
+    elif md:
+        return 2 * int(md.group(1))
+    elif ms:
+        return int(ms.group(1)) // 2
+    else:
+        raise ValueError(
+            'Point group label "{}" unknown, cannot assign '
+            "a rotational symmetry number".format(pointgroup)
+        )
 
 
 def read_vasp_hessian(
@@ -243,9 +239,10 @@ def read_vasp_hessian_xml(xml="vasprun.xml", convert_to_au=True, stripmass=True)
     doc = parse(xml)
     root = doc.getroot()
 
-    species = []
-    for entry in root.find("atominfo/array[@name='atoms']/set"):
-        species.append(entry[0].text.strip())
+    species = [
+        entry[0].text.strip()
+        for entry in root.find("atominfo/array[@name='atoms']/set")
+    ]
 
     natoms = int(root.find("atominfo/atoms").text)
     dof = 3 * natoms
@@ -272,9 +269,10 @@ def read_vasp_hessian_xml(xml="vasprun.xml", convert_to_au=True, stripmass=True)
 
     if stripmass:
         # get the masses that VASP uses by default
-        vasp_mass = {}
-        for element in root.find("atominfo/array[@name='atomtypes']/set"):
-            vasp_mass[element[1].text.strip()] = float(element[2].text)
+        vasp_mass = {
+            element[1].text.strip(): float(element[2].text)
+            for element in root.find("atominfo/array[@name='atomtypes']/set")
+        }
 
         vasp_massvec = np.zeros(hess_size, dtype=float)
         for i, j in enumerate(np.floor_divide(index, 3)):
@@ -299,11 +297,7 @@ def print_modeinfo(mi, output=None):
         Name of the file to store the printout, if ``None`` stdout will be used
     """
 
-    if output is not None:
-        fobj = open(output, "w")
-    else:
-        fobj = None
-
+    fobj = open(output, "w") if output is not None else None
     fmts = {
         "HOfreq": "{:12.6f}".format,
         "effective_mass": "{:12.6f}".format,
@@ -434,12 +428,11 @@ def read_poscars(filename):
 
     pat = re.compile(r"Mode\s*=\s*(\d+)\s*point\s*=\s*(-?\d+)")
 
-    if os.path.exists(filename):
-        with open(filename, "r") as fdata:
-            poscars = fdata.read()
-    else:
+    if not os.path.exists(filename):
         raise OSError('File "{}" does not exist'.format(filename))
 
+    with open(filename, "r") as fdata:
+        poscars = fdata.read()
     parsed = [x for x in pat.split(poscars) if x != " "]
     images = OrderedDict()
 
@@ -459,12 +452,11 @@ def write_modes(filename="POSCARs"):
 
     pat = re.compile(r"Mode\s*=\s*(\d+)\s*point\s*=\s*(-?\d+)")
 
-    if os.path.exists(filename):
-        with open(filename, "r") as fdata:
-            poscars = fdata.read()
-    else:
+    if not os.path.exists(filename):
         raise OSError('File "{}" does not exist'.format(filename))
 
+    with open(filename, "r") as fdata:
+        poscars = fdata.read()
     parsed = [x for x in pat.split(poscars) if x != " "]
 
     it = iter(parsed)
