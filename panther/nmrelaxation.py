@@ -1,4 +1,3 @@
-
 from __future__ import print_function
 from builtins import super
 
@@ -13,7 +12,7 @@ from .vibrations import harmonic_vibrational_analysis
 
 
 class NormalModeBFGS(Optimizer, object):
-    '''
+    """
     Normal mode optimizer with approximate hessian update
 
     Parameters
@@ -44,13 +43,22 @@ class NormalModeBFGS(Optimizer, object):
 
     trajectory : str
         Name of the trajectory file
-    '''
+    """
 
-    def __init__(self, atoms, phase, hessian=None,
-                 hessian_update='BFGS',
-                 logfile='-', trajectory=None, restart=None,
-                 proj_translations=True, proj_rotations=True,
-                 master=None, verbose=False):
+    def __init__(
+        self,
+        atoms,
+        phase,
+        hessian=None,
+        hessian_update="BFGS",
+        logfile="-",
+        trajectory=None,
+        restart=None,
+        proj_translations=True,
+        proj_rotations=True,
+        master=None,
+        verbose=False,
+    ):
 
         super().__init__(atoms, restart, logfile, trajectory, master)
 
@@ -72,13 +80,13 @@ class NormalModeBFGS(Optimizer, object):
 
         self.natoms = atoms.get_number_of_atoms()
         self.ndof = 3 * self.natoms
-        self.nvibdof = get_nvibdof(atoms, proj_rotations, proj_translations,
-                                   self.phase)
+        self.nvibdof = get_nvibdof(atoms, proj_rotations, proj_translations, self.phase)
 
         # matrix with inverse square roots of masses on diagonal
         self.M_invsqrt = np.zeros((self.ndof, self.ndof), dtype=float)
-        np.fill_diagonal(self.M_invsqrt,
-                         np.repeat(1.0 / np.sqrt(atoms.get_masses()), 3))
+        np.fill_diagonal(
+            self.M_invsqrt, np.repeat(1.0 / np.sqrt(atoms.get_masses()), 3)
+        )
 
         # write the header to the logfile
         self.log_header()
@@ -89,34 +97,51 @@ class NormalModeBFGS(Optimizer, object):
 
         @hessian.setter
         def hessian(self, value):
-            'Initialize the hessian matrix'
+            "Initialize the hessian matrix"
 
             if hessian is None:
                 self._hessian = np.eye(3 * len(self.atoms)) * 70.0
 
     def log_header(self):
-        'Header for the log with convergence information'
+        "Header for the log with convergence information"
 
-        print('{0:<6s} {1:^15s} {2:^15s} {3:^15s} {4:^15s} {5:^15s} {6:^20s}'.format(
-            'iter', 'G(C) max', 'G(NM) max', 'G(NM) norm', 'NM step norm',
-            'energy [eV]', 'time'), file=self.logfile)
-        print('=' * 107, file=self.logfile)
+        print(
+            "{0:<6s} {1:^15s} {2:^15s} {3:^15s} {4:^15s} {5:^15s} {6:^20s}".format(
+                "iter",
+                "G(C) max",
+                "G(NM) max",
+                "G(NM) norm",
+                "NM step norm",
+                "energy [eV]",
+                "time",
+            ),
+            file=self.logfile,
+        )
+        print("=" * 107, file=self.logfile)
         self.logfile.flush()
 
     def log(self, grad, grad_nm, step_nm):
-        'Print a line with convergence information'
+        "Print a line with convergence information"
 
-        gmax = np.sqrt((grad.reshape(self.natoms, 3))**2).sum(axis=1).max()
+        gmax = np.sqrt((grad.reshape(self.natoms, 3)) ** 2).sum(axis=1).max()
         gnnmorm = np.sqrt(np.dot(grad_nm, grad_nm))
 
-        print('{0:>6d} {1:>15.8f} {2:>15.8f} {3:>15.8f} {4:>15.8f} {5:>15.8f} {6:>20s}'.format(
-            self.nsteps, gmax, np.max(np.abs(grad_nm)), gnnmorm,
-            np.sqrt(np.dot(step_nm, step_nm)), self.atoms.get_potential_energy(),
-            datetime.now().strftime('%H:%M:%S %d-%m-%Y')), file=self.logfile)
+        print(
+            "{0:>6d} {1:>15.8f} {2:>15.8f} {3:>15.8f} {4:>15.8f} {5:>15.8f} {6:>20s}".format(
+                self.nsteps,
+                gmax,
+                np.max(np.abs(grad_nm)),
+                gnnmorm,
+                np.sqrt(np.dot(step_nm, step_nm)),
+                self.atoms.get_potential_energy(),
+                datetime.now().strftime("%H:%M:%S %d-%m-%Y"),
+            ),
+            file=self.logfile,
+        )
         self.logfile.flush()
 
     def update_hessian(self, coords, grad):
-        '''
+        """
         Perform hessian update
 
         Parameters
@@ -126,7 +151,7 @@ class NormalModeBFGS(Optimizer, object):
 
         grad : array_like (N,)
             Current gradient
-        '''
+        """
 
         # on first step there's no previous grad and coords so not updated is
         # performed
@@ -142,7 +167,7 @@ class NormalModeBFGS(Optimizer, object):
         if np.abs(dx).max() < 1.0e-7:
             return
 
-        if self.hessian_update == 'BFGS':
+        if self.hessian_update == "BFGS":
             dxdg = np.dot(dx, dg)
             hdx = np.dot(self.hessian, dx)
             b = np.dot(dx, hdx)
@@ -150,7 +175,7 @@ class NormalModeBFGS(Optimizer, object):
             if np.abs(dxdg) > macheps and np.abs(b) > macheps:
                 self.hessian += np.outer(dg, dg) / dxdg - np.outer(hdx, hdx) / b
 
-        elif self.hessian_update == 'DFP':
+        elif self.hessian_update == "DFP":
             dgdxT = np.outer(dg, dx)
             dgTdx = np.dot(dg, dx)
             uleft = np.eye(self.hessian.shape[0]) - dgdxT / dgTdx
@@ -159,23 +184,25 @@ class NormalModeBFGS(Optimizer, object):
 
             self.hessian = bk + np.outer(dg, dg) / dgTdx
 
-        elif self.hessian_update.upper() == 'SR1':
+        elif self.hessian_update.upper() == "SR1":
             hdx = np.dot(self.hessian, dx)
             dghdx = dg - hdx
             self.hessian += np.outer(dghdx, dghdx) / np.dot(dghdx, dx)
 
         else:
-            raise NotImplementedError('update <{}> not available'.format(self.hessian_update))
+            raise NotImplementedError(
+                "update <{}> not available".format(self.hessian_update)
+            )
 
     def step(self, grad):
-        '''
+        """
         Calculate the step in cartesian coordinates based on the step in
         normal modes in the rational function approximation (RFO)
 
         Args:
             grad : array_like (N,)
                 Current gradient
-        '''
+        """
 
         nv = self.nvibdof
         coords = self.atoms.get_positions().ravel()
@@ -184,18 +211,25 @@ class NormalModeBFGS(Optimizer, object):
         self.update_hessian(coords, grad)
 
         # calculate hessian eigenvalues and eigenvectors
-        evals, evecs = harmonic_vibrational_analysis(self.hessian, self.atoms,
-                                               proj_translations=self.proj_translations,
-                                               proj_rotations=self.proj_rotations,
-                                               ascomplex=False, massau=False)
+        evals, evecs = harmonic_vibrational_analysis(
+            self.hessian,
+            self.atoms,
+            proj_translations=self.proj_translations,
+            proj_rotations=self.proj_rotations,
+            ascomplex=False,
+            massau=False,
+        )
 
         evals = np.power(evals, 2)
         mwevecs = np.dot(self.M_invsqrt, evecs)
 
         grad_nm = np.dot(mwevecs.T, grad)
         step_nm = np.zeros_like(grad_nm)
-        step_nm[:nv] = -2.0 * grad_nm[:nv] / (evals[:nv] +
-                       np.sqrt(evals[:nv]**2 + 4.0 * grad_nm[:nv]**2))
+        step_nm[:nv] = (
+            -2.0
+            * grad_nm[:nv]
+            / (evals[:nv] + np.sqrt(evals[:nv] ** 2 + 4.0 * grad_nm[:nv] ** 2))
+        )
 
         step_cart = np.dot(mwevecs, step_nm)
         new_coords = coords + step_cart
@@ -229,10 +263,19 @@ class NormalModeBFGS(Optimizer, object):
         self.hessian, self.coords_0, self.grad_0 = self.load()
 
 
-def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
-               proj_rotations=True, gtol=1.0e-5, verbose=False,
-               hessian_update='BFGS', steps=100000):
-    '''
+def nmoptimize(
+    atoms,
+    hessian,
+    calc,
+    phase,
+    proj_translations=True,
+    proj_rotations=True,
+    gtol=1.0e-5,
+    verbose=False,
+    hessian_update="BFGS",
+    steps=100000,
+):
+    """
     Relax the strcture using normal mode displacements
 
     Parameters
@@ -274,7 +317,7 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
        The Journal of Chemical Physics, 117(9), 4126.
        `doi:10.1063/1.1498468 <http://dx.doi.org/10.1063/1.1498468>`_
 
-    '''
+    """
 
     natoms = atoms.get_number_of_atoms()
     ndof = 3 * natoms
@@ -287,10 +330,14 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
     np.fill_diagonal(M_invsqrt, np.repeat(1.0 / np.sqrt(masses), 3))
 
     # calculate hessian eigenvalues and eigenvectors
-    evals, evecs = harmonic_vibrational_analysis(hessian, atoms,
-                                           proj_translations=proj_translations,
-                                           proj_rotations=proj_rotations,
-                                           ascomplex=False, massau=False)
+    evals, evecs = harmonic_vibrational_analysis(
+        hessian,
+        atoms,
+        proj_translations=proj_translations,
+        proj_rotations=proj_rotations,
+        ascomplex=False,
+        massau=False,
+    )
 
     evals = np.power(evals, 2)
 
@@ -309,41 +356,56 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
     grad_nm = np.dot(mwevecs.T, grad)
 
     step_nm = np.zeros_like(grad_nm)
-    step_nm[:nvibdof] = -2.0 * grad_nm[:nvibdof] / (evals[:nvibdof]
-        + np.sqrt(evals[:nvibdof]**2 + 4.0 * grad_nm[:nvibdof]**2))
+    step_nm[:nvibdof] = (
+        -2.0
+        * grad_nm[:nvibdof]
+        / (
+            evals[:nvibdof]
+            + np.sqrt(evals[:nvibdof] ** 2 + 4.0 * grad_nm[:nvibdof] ** 2)
+        )
+    )
 
     step_cart = np.dot(mwevecs, step_nm)
     coords = coords_old + step_cart
 
     if verbose:
-        print(' eigenvalues '.center(50, '-'))
+        print(" eigenvalues ".center(50, "-"))
         print(evals)
 
-        print(' cart gradient '.center(50, '-'))
+        print(" cart gradient ".center(50, "-"))
         print(grad)
 
-        print(' nm gradient '.center(50, '-'))
+        print(" nm gradient ".center(50, "-"))
         print(grad_nm)
 
-        print(' nm step '.center(50, '-'))
+        print(" nm step ".center(50, "-"))
         print(step_nm)
 
-        print(' cart step '.center(50, '-'))
+        print(" cart step ".center(50, "-"))
         print(step_cart)
 
-        print(' new coordinates '.center(50, '-'))
+        print(" new coordinates ".center(50, "-"))
         print(coords)
 
     iteration = 0
 
     # header for the convergence information
-    print('{0:<6s} {1:^15s} {2:^15s} {3:^15s} {4:^15s} {5:^20s}'.format(
-        'iter', 'G(NM) max', 'G(NM) norm', 'NM step norm', 'energy [eV]', 'time'))
-    print('=' * 91)
-    print('{0:>6d} {1:>15.8f} {2:>15.8f} {3:>15.8f} {4:>15.8f} {5:>20s}'.format(
-        iteration, np.max(np.abs(grad_nm)), np.sqrt(np.dot(grad_nm, grad_nm)),
-        np.sqrt(np.dot(step_nm, step_nm)), atoms.get_potential_energy(),
-        datetime.now().strftime('%H:%M:%S %d-%m-%Y')))
+    print(
+        "{0:<6s} {1:^15s} {2:^15s} {3:^15s} {4:^15s} {5:^20s}".format(
+            "iter", "G(NM) max", "G(NM) norm", "NM step norm", "energy [eV]", "time"
+        )
+    )
+    print("=" * 91)
+    print(
+        "{0:>6d} {1:>15.8f} {2:>15.8f} {3:>15.8f} {4:>15.8f} {5:>20s}".format(
+            iteration,
+            np.max(np.abs(grad_nm)),
+            np.sqrt(np.dot(grad_nm, grad_nm)),
+            np.sqrt(np.dot(step_nm, step_nm)),
+            atoms.get_potential_energy(),
+            datetime.now().strftime("%H:%M:%S %d-%m-%Y"),
+        )
+    )
 
     while iteration <= steps:
         iteration += 1
@@ -357,16 +419,21 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
 
         # delta_grad = grad - grad_old
 
-        hessian = update_hessian(grad, grad_old, step_cart, hessian,
-                                 update=hessian_update)
+        hessian = update_hessian(
+            grad, grad_old, step_cart, hessian, update=hessian_update
+        )
 
         grad_old = grad.copy()
 
         # calculate hessian eigenvalues and eigenvectors
-        evals, evecs = harmonic_vibrational_analysis(hessian, atoms,
-                                               proj_translations=proj_translations,
-                                               proj_rotations=proj_rotations,
-                                               ascomplex=False, massau=False)
+        evals, evecs = harmonic_vibrational_analysis(
+            hessian,
+            atoms,
+            proj_translations=proj_translations,
+            proj_rotations=proj_rotations,
+            ascomplex=False,
+            massau=False,
+        )
         evals = np.power(evals, 2)
 
         mwevecs = np.dot(M_invsqrt, evecs)
@@ -375,51 +442,67 @@ def nmoptimize(atoms, hessian, calc, phase, proj_translations=True,
         gmax = np.max(np.abs(grad_nm))
 
         # print the convergence info
-        print('{0:>6d} {1:>15.8f} {2:>15.8f} {3:>15.8f} {4:>15.8f} {5:>20s}'.format(
-            iteration, gmax, np.sqrt(np.dot(grad_nm, grad_nm)),
-            np.sqrt(np.dot(step_nm, step_nm)), atoms.get_potential_energy(),
-            datetime.now().strftime('%H:%M:%S %d-%m-%Y')))
+        print(
+            "{0:>6d} {1:>15.8f} {2:>15.8f} {3:>15.8f} {4:>15.8f} {5:>20s}".format(
+                iteration,
+                gmax,
+                np.sqrt(np.dot(grad_nm, grad_nm)),
+                np.sqrt(np.dot(step_nm, step_nm)),
+                atoms.get_potential_energy(),
+                datetime.now().strftime("%H:%M:%S %d-%m-%Y"),
+            )
+        )
 
         if gmax < gtol:
-            evals, evecs = harmonic_vibrational_analysis(hessian, atoms,
-                                               proj_translations=proj_translations,
-                                               proj_rotations=proj_rotations,
-                                               ascomplex=False, massau=False)
-            np.save('hessian_evalues', evals)
-            np.save('hessian_evectors', evecs)
-            print('# convergence achieved after {} iterations'.format(iteration))
+            evals, evecs = harmonic_vibrational_analysis(
+                hessian,
+                atoms,
+                proj_translations=proj_translations,
+                proj_rotations=proj_rotations,
+                ascomplex=False,
+                massau=False,
+            )
+            np.save("hessian_evalues", evals)
+            np.save("hessian_evectors", evecs)
+            print("# convergence achieved after {} iterations".format(iteration))
             break
 
-        step_nm[:nvibdof] = -2.0 * grad_nm[:nvibdof] / (evals[:nvibdof]
-            + np.sqrt(evals[:nvibdof]**2 + 4.0 * grad_nm[:nvibdof]**2))
+        step_nm[:nvibdof] = (
+            -2.0
+            * grad_nm[:nvibdof]
+            / (
+                evals[:nvibdof]
+                + np.sqrt(evals[:nvibdof] ** 2 + 4.0 * grad_nm[:nvibdof] ** 2)
+            )
+        )
 
         step_cart = np.dot(mwevecs, step_nm)
         coords = coords_old + step_cart
 
         if verbose:
-            print(' eigenvalues '.center(50, '-'))
+            print(" eigenvalues ".center(50, "-"))
             print(evals)
 
-            print(' cart gradient '.center(50, '-'))
+            print(" cart gradient ".center(50, "-"))
             print(grad)
 
-            print(' nm gradient '.center(50, '-'))
+            print(" nm gradient ".center(50, "-"))
             print(grad_nm)
 
-            print(' nm step '.center(50, '-'))
+            print(" nm step ".center(50, "-"))
             print(step_nm)
 
-            print(' cart step '.center(50, '-'))
+            print(" cart step ".center(50, "-"))
             print(step_cart)
 
-            print(' new coordinates '.center(50, '-'))
+            print(" new coordinates ".center(50, "-"))
             print(coords)
     else:
-        print('### convergence NOT achieved after ', iteration, ' iterations')
+        print("### convergence NOT achieved after ", iteration, " iterations")
 
 
-def update_hessian(grad, grad_old, dx, hessian, update='BFGS'):
-    '''
+def update_hessian(grad, grad_old, dx, hessian, update="BFGS"):
+    """
     Perform hessian update
 
     Parameters
@@ -440,13 +523,13 @@ def update_hessian(grad, grad_old, dx, hessian, update='BFGS'):
     -------
     hessian : array_like
         Update hessian matrix
-    '''
+    """
 
     macheps = np.finfo(np.float64).eps
 
     dg = grad - grad_old
 
-    if update == 'BFGS':
+    if update == "BFGS":
         dxdg = np.dot(dx, dg)
         hdx = np.dot(hessian, dx)
         b = np.dot(dx, hdx)
@@ -456,7 +539,7 @@ def update_hessian(grad, grad_old, dx, hessian, update='BFGS'):
         else:
             return hessian + np.outer(dg, dg) / dxdg - np.outer(hdx, hdx) / b
 
-    elif update == 'DFP':
+    elif update == "DFP":
         dgdxT = np.outer(dg, dx)
         dgTdx = np.dot(dg, dx)
         uleft = np.eye(hessian.shape[0]) - dgdxT / dgTdx
@@ -465,7 +548,7 @@ def update_hessian(grad, grad_old, dx, hessian, update='BFGS'):
 
         return bk + np.outer(dg, dg) / dgTdx
 
-    elif update.upper() == 'SR1':
+    elif update.upper() == "SR1":
         hdx = np.dot(hessian, dx)
         dghdx = dg - hdx
         return hessian + np.outer(dghdx, dghdx) / np.dot(dghdx, dx)

@@ -1,4 +1,3 @@
-
 from __future__ import print_function, absolute_import, division
 
 import logging
@@ -29,9 +28,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def get_nvibdof(atoms, proj_rotations, proj_translations, phase,
-                include_constr=False):
-    '''
+def get_nvibdof(atoms, proj_rotations, proj_translations, phase, include_constr=False):
+    """
     Calculate the number of vibrational degrees of freedom
 
     Parameters
@@ -50,7 +48,7 @@ def get_nvibdof(atoms, proj_rotations, proj_translations, phase,
     -------
     nvibdof : float
         Number of vibrational degrees of freedom
-    '''
+    """
 
     # get the total number of degrees of freedom
     if include_constr:
@@ -59,24 +57,26 @@ def get_nvibdof(atoms, proj_rotations, proj_translations, phase,
         ndof = 3 * len(atoms)
 
     extradof = 0
-    if phase.lower() == 'gas':
+    if phase.lower() == "gas":
         if proj_rotations & proj_translations:
             if ndof > 6:
                 extradof = 6
             elif ndof == 6:
                 extradof = 5
-    elif phase.lower() == 'solid':
+    elif phase.lower() == "solid":
         if proj_rotations | proj_translations:
             extradof = 3
     else:
-        raise ValueError('Wrong phase specification: {}, expecting either '
-                         '"gas" or "solid"'.format(phase))
+        raise ValueError(
+            "Wrong phase specification: {}, expecting either "
+            '"gas" or "solid"'.format(phase)
+        )
 
     return ndof - extradof
 
 
 def get_internals_and_bmatrix(atoms):
-    '''
+    """
     internals is a numpy record array with 'type' and 'value' records
     bmatrix is a numpy array n_int x n_cart
 
@@ -84,53 +84,60 @@ def get_internals_and_bmatrix(atoms):
     ----------
     atoms : ase.Atoms
         Atoms object
-    '''
+    """
 
     intc_raw = get_internals(atoms)
     bmatrix = get_bmatrix(atoms, intc_raw)
-    internals = np.array([(i.tag, i.value) for i in intc_raw],
-                         dtype=[('type', 'S4'), ('value', np.float32)])
+    internals = np.array(
+        [(i.tag, i.value) for i in intc_raw],
+        dtype=[("type", "S4"), ("value", np.float32)],
+    )
 
-    mask = internals['value'] < 0.0
-    internals['value'][mask] = 2 * pi + internals['value'][mask]
+    mask = internals["value"] < 0.0
+    internals["value"][mask] = 2 * pi + internals["value"][mask]
 
     return internals, bmatrix
 
 
-def get_modeinfo(hessian, freqs, ndof, Bmatrix_inv, Dmatrix, mwevecs,
-                 npoints, internals):
-    '''
+def get_modeinfo(
+    hessian, freqs, ndof, Bmatrix_inv, Dmatrix, mwevecs, npoints, internals
+):
+    """
     Compose a DataFrame with information about the vibrations, each
     mode corresponds to a separate row
-    '''
+    """
 
     # DataFrame with mode data
-    mi = pd.DataFrame(index=pd.Index(data=range(ndof), name='mode'),
-                      columns=['HOfreq', 'effective_mass', 'displacement',
-                               'is_stretch', 'vibration'])
+    mi = pd.DataFrame(
+        index=pd.Index(data=range(ndof), name="mode"),
+        columns=["HOfreq", "effective_mass", "displacement", "is_stretch", "vibration"],
+    )
 
-    mi['HOfreq'] = freqs * AU2INVCM
-    mi['vibration'] = (mi.HOfreq != 0.0) & (mi.HOfreq.notnull())
+    mi["HOfreq"] = freqs * AU2INVCM
+    mi["vibration"] = (mi.HOfreq != 0.0) & (mi.HOfreq.notnull())
 
     mi = vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals, mi)
 
-    mi['is_stretch'] = mi['P_stretch'] > 0.9
-    mi['effective_mass'] = 1.0 / np.einsum('ij,ji->i', mwevecs.T, mwevecs)
+    mi["is_stretch"] = mi["P_stretch"] > 0.9
+    mi["effective_mass"] = 1.0 / np.einsum("ij,ji->i", mwevecs.T, mwevecs)
 
     # calculate the megnitude of the displacement for all the modes
-    mi.loc[mi['is_stretch'], 'displacement'] = \
-        8.0 / np.sqrt(2.0 * pi * np.abs(freqs[mi['is_stretch'].values]))
-    mi.loc[~mi['is_stretch'], 'displacement'] = \
-        4.0 / np.sqrt(2.0 * pi * np.abs(freqs[~mi['is_stretch'].values]))
-    mi['displacement'] = mi['displacement'] / (npoints * 2.0)
-    mi.to_pickle('modeinfo.pkl')
+    mi.loc[mi["is_stretch"], "displacement"] = 8.0 / np.sqrt(
+        2.0 * pi * np.abs(freqs[mi["is_stretch"].values])
+    )
+    mi.loc[~mi["is_stretch"], "displacement"] = 4.0 / np.sqrt(
+        2.0 * pi * np.abs(freqs[~mi["is_stretch"].values])
+    )
+    mi["displacement"] = mi["displacement"] / (npoints * 2.0)
+    mi.to_pickle("modeinfo.pkl")
 
     return mi
 
 
-def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
-                            modes='all'):
-    '''
+def calculate_displacements(
+    atoms, hessian, freqs, normal_modes, npoints=4, modes="all"
+):
+    """
     Calculate displacements in internal coordinates
 
     Parameters
@@ -163,7 +170,7 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
     mi : pandas.DataFrame
         DataFrame with per mode characteristics, displacements, masses
         and vibrational population analysis
-    '''
+    """
 
     natoms = atoms.get_number_of_atoms()
     ndof = 3 * natoms
@@ -186,36 +193,40 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
     Dmatrix = np.dot(Bmatrix, mwevecs)
 
     # DataFrame with mode data
-    mi = pd.DataFrame(index=pd.Index(data=range(ndof), name='mode'),
-                      columns=['HOfreq', 'effective_mass', 'displacement',
-                               'is_stretch', 'vibration'])
+    mi = pd.DataFrame(
+        index=pd.Index(data=range(ndof), name="mode"),
+        columns=["HOfreq", "effective_mass", "displacement", "is_stretch", "vibration"],
+    )
 
-    mi['HOfreq'] = freqs * AU2INVCM
-    mi['vibration'] = (mi.HOfreq != 0.0) & (mi.HOfreq.notnull())
+    mi["HOfreq"] = freqs * AU2INVCM
+    mi["vibration"] = (mi.HOfreq != 0.0) & (mi.HOfreq.notnull())
 
     mi = vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals, mi)
 
-    mi['is_stretch'] = mi['P_stretch'] > 0.9
-    mi['effective_mass'] = 1.0 / np.einsum('ij,ji->i', mwevecs.T, mwevecs)
+    mi["is_stretch"] = mi["P_stretch"] > 0.9
+    mi["effective_mass"] = 1.0 / np.einsum("ij,ji->i", mwevecs.T, mwevecs)
 
     # calculate the megnitude of the displacement for all the modes
-    mi.loc[mi['is_stretch'], 'displacement'] = \
-        8.0 / np.sqrt(2.0 * pi * np.abs(freqs[mi['is_stretch'].values]))
-    mi.loc[~mi['is_stretch'], 'displacement'] = \
-        4.0 / np.sqrt(2.0 * pi * np.abs(freqs[~mi['is_stretch'].values]))
-    mi['displacement'] = mi['displacement'] / (npoints * 2.0)
-    mi.to_pickle('modeinfo.pkl')
+    mi.loc[mi["is_stretch"], "displacement"] = 8.0 / np.sqrt(
+        2.0 * pi * np.abs(freqs[mi["is_stretch"].values])
+    )
+    mi.loc[~mi["is_stretch"], "displacement"] = 4.0 / np.sqrt(
+        2.0 * pi * np.abs(freqs[~mi["is_stretch"].values])
+    )
+    mi["displacement"] = mi["displacement"] / (npoints * 2.0)
+    mi.to_pickle("modeinfo.pkl")
 
     if isinstance(modes, string_types):
-        if modes.lower() in ['all', ':']:
-            modes = mi[mi['vibration']].index.values
+        if modes.lower() in ["all", ":"]:
+            modes = mi[mi["vibration"]].index.values
         else:
             modes = expandrange(modes)
     elif isinstance(modes, (list, tuple)):
-        raise NotImplementedError('not available yet')
+        raise NotImplementedError("not available yet")
     else:
-        ValueError('<modes> should be a str, list or tuple '
-                   'got: {}'.format(type('modes')))
+        ValueError(
+            "<modes> should be a str, list or tuple " "got: {}".format(type("modes"))
+        )
 
     images = OrderedDict()
 
@@ -228,16 +239,19 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
             for sign in [1, -1]:
                 for point in range(1, npoints + 1):
                     # debug
-                    line = ' mode : {0:d} '.format(mode) +\
-                           ' nu : {0:.4f} '.format(nu) +\
-                           ' point : {0:d} '.format(point * sign)
-                    log.debug(line.center(80, '*'))
+                    line = (
+                        " mode : {0:d} ".format(mode)
+                        + " nu : {0:.4f} ".format(nu)
+                        + " point : {0:d} ".format(point * sign)
+                    )
+                    log.debug(line.center(80, "*"))
 
                     # equilibrium structure
                     coords = pos.ravel().copy() * ANG2BOHR
 
-                    internal_coord_disp = sign * Dmatrix[:, mode] *\
-                                          mi.loc[mode, 'displacement'] * point
+                    internal_coord_disp = (
+                        sign * Dmatrix[:, mode] * mi.loc[mode, "displacement"] * point
+                    )
 
                     cart_coord_disp = np.dot(Bmatrix_inv, internal_coord_disp)
 
@@ -254,24 +268,37 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
                         internals_new, Bmatrix = get_internals_and_bmatrix(newatoms)
 
                         # debug
-                        log.debug('internals'.center(80, '-'))
+                        log.debug("internals".center(80, "-"))
                         for row in internals_new:
-                            log.debug('{0:5s} {1:20.10f}'.format(row['type'], row['value']))
+                            log.debug(
+                                "{0:5s} {1:20.10f}".format(row["type"], row["value"])
+                            )
 
-                        delta_int = internal_coord_disp - (internals_new['value'] - internals['value'])
+                        delta_int = internal_coord_disp - (
+                            internals_new["value"] - internals["value"]
+                        )
                         disp_norm = np.sqrt(np.dot(delta_int, delta_int))
 
                         if iteration == 1:
                             disp_norm_init = copy.copy(disp_norm)
                         elif iteration > 1:
                             if disp_norm - disp_norm_init > DISPNORM_THRESH:
-                                print('### Back iteration not convergerd after', iteration, 'iterations')
-                                print('### disp_norm - disp_norm_init: ', disp_norm - disp_norm_init)
+                                print(
+                                    "### Back iteration not convergerd after",
+                                    iteration,
+                                    "iterations",
+                                )
+                                print(
+                                    "### disp_norm - disp_norm_init: ",
+                                    disp_norm - disp_norm_init,
+                                )
                                 coords = coords_init.copy()
                                 break
 
-                        for internal_type in ['A', 'T']:
-                            mask = np.logical_and(internals['type'] == internal_type, delta_int > pi)
+                        for internal_type in ["A", "T"]:
+                            mask = np.logical_and(
+                                internals["type"] == internal_type, delta_int > pi
+                            )
                             delta_int[mask] = 2 * pi - np.abs(delta_int[mask])
 
                         cart_coord_disp = np.dot(Bmatrix_inv, delta_int)
@@ -279,10 +306,18 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
                         coords += cart_coord_disp
 
                         if np.max(np.abs(cart_coord_disp)) < CARTDISP_THRESH:
-                            print('### convergence achieved after ', iteration, ' iterations')
+                            print(
+                                "### convergence achieved after ",
+                                iteration,
+                                " iterations",
+                            )
                             break
                         elif iteration > 25:
-                            print('### convergence NOT achieved after ', iteration, ' iterations')
+                            print(
+                                "### convergence NOT achieved after ",
+                                iteration,
+                                " iterations",
+                            )
                             break
                         else:
                             iteration += 1
@@ -290,14 +325,14 @@ def calculate_displacements(atoms, hessian, freqs, normal_modes, npoints=4,
                     newatoms.set_positions(coords.reshape(natoms, 3) / ANG2BOHR)
                     images[mode][sign * point] = newatoms
 
-    with open('images.pkl', 'wb') as fpkl:
+    with open("images.pkl", "wb") as fpkl:
         pickle.dump(images, fpkl)
 
     return images, mi
 
 
 def vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals, mi):
-    '''
+    """
     Calculate the vibrational population analysis
 
     Parameters
@@ -320,7 +355,7 @@ def vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals, mi):
     mi : pandas.DataFrame
         Modeinfo DataFrame updated with columns with vibrational
         population analysis results
-    '''
+    """
 
     # Wilson F matrix
     Fmatrix = np.dot(Bmatrix_inv.T, np.dot(hessian, Bmatrix_inv))
@@ -335,13 +370,17 @@ def vib_population(hessian, freqs, Bmatrix_inv, Dmatrix, internals, mi):
     # divide each column of nu by the hessian eigenvalues
     nu = nu / np.power(freqs[:, np.newaxis], 2.0)
 
-    icnames = [('R', 'P_stretch'), ('A', 'P_bend'), ('T', 'P_torsion'),
-               ('IR1', 'P_longrange')]
+    icnames = [
+        ("R", "P_stretch"),
+        ("A", "P_bend"),
+        ("T", "P_torsion"),
+        ("IR1", "P_longrange"),
+    ]
 
     for iname, cname in icnames:
         mi.loc[:, cname] = 0.0
-        if iname in internals['type'].tolist():
-            mask = internals['type'] == iname
+        if iname in internals["type"].tolist():
+            mask = internals["type"] == iname
             # sum over rows of nu to get the vibrational populations
             mi.loc[:, cname] = np.sum(nu[:, mask], axis=1)
 
