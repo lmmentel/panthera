@@ -1,4 +1,4 @@
-.. currentmodule:: panther
+.. currentmodule:: panthera
 .. _api:
 
 *************
@@ -10,79 +10,79 @@ API Reference
 Thermochemistry
 ===============
 
-.. currentmodule:: panther.thermochemistry
+.. currentmodule:: panthera.thermochemistry
 
-.. autoclass:: panther.thermochemistry.Thermochemistry
+.. autoclass:: panthera.thermochemistry.Thermochemistry
    :members:
 
 NormalModeBFGS
 ==============
 
-.. currentmodule:: panther.nmrelaxation
+.. currentmodule:: panthera.nmrelaxation
 
-.. autoclass:: panther.nmrelaxation.NormalModeBFGS
+.. autoclass:: panthera.nmrelaxation.NormalModeBFGS
    :members:
 
-panther.anharmonicity
+panthera.anharmonicity
 =====================
 
-.. automodule:: panther.anharmonicity
+.. automodule:: panthera.anharmonicity
     :members:
     :undoc-members:
     :show-inheritance:
 
-panther.displacements module
+panthera.displacements module
 ============================
 
-.. automodule:: panther.displacements
+.. automodule:: panthera.displacements
     :members:
     :undoc-members:
     :show-inheritance:
 
-panther.io module
+panthera.io module
 =================
 
-.. automodule:: panther.io
+.. automodule:: panthera.io
     :members:
     :undoc-members:
     :show-inheritance:
 
-panther.nmrelaxation module
+panthera.nmrelaxation module
 ===========================
 
-.. automodule:: panther.nmrelaxation
+.. automodule:: panthera.nmrelaxation
     :members:
     :undoc-members:
     :show-inheritance:
 
-panther.panther module
+panthera.panthera module
 ======================
 
-.. automodule:: panther.panther
+.. automodule:: panthera.panthera
     :members:
     :undoc-members:
     :show-inheritance:
 
-panther.pes module
+panthera.pes module
 ===================
 
-.. automodule:: panther.pes
+.. automodule:: panthera.pes
     :members:
     :undoc-members:
     :show-inheritance:
 
-panther.plotting module
+panthera.plotting module
 =======================
 
-.. automodule:: panther.plotting
+.. automodule:: panthera.plotting
     :members:
     :undoc-members:
     :show-inheritance:
 
-panther.vibrations module
+panthera.vibrations module
 =========================
 
-.. automodule:: panther.vibrations
+.. automodule:: panthera.vibrations
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,5 +1,5 @@
 
-# panther - program for anharmonic thermochemistry
+# panthera - program for anharmonic thermochemistry
 
 ## Installation
 
@@ -7,28 +7,28 @@ The recommended installation method is with [pip]. The latest version
 can be installed directly from [bitbucket repository]:
 
 ```bash
-pip install https://github.com/lmmentel/panther.git
+pip install https://github.com/lmmentel/panthera.git
 ```
 or cloned first
 ```bash
-git clone https://github.com/lmmentel/panther.git
+git clone https://github.com/lmmentel/panthera.git
 ```
 and installed via
 ```bash
-pip install -U [--user] ./panther
+pip install -U [--user] ./panthera
 ```
 
 [pip]: https://pip.pypa.io/en/stable/
 
 ## Documentation
 
-The documentatioan can be at [panther.rtfd.io](http://panther.rtfd.io).
+The documentatioan can be at [panthera.rtfd.io](http://panthera.rtfd.io).
 
 ## Citing
 
-If you use *panther* in a scientific publication, please cite the software as
+If you use *panthera* in a scientific publication, please cite the software as
 
-|    L. M. Mentel, *panther* - Package for Anharmonic Thermochemistry, 2016. Available at: [https://github.com/lmmentel/panther](https://github.com/lmmentel/panther)
+|    L. M. Mentel, *panthera* - Package for Anharmonic Thermochemistry, 2016. Available at: [https://github.com/lmmentel/panthera](https://github.com/lmmentel/panthera)
 
 
 ## Funding

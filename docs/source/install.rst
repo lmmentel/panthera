@@ -19,21 +19,21 @@ can be installed directly from `github repository`_:
 
 .. code-block:: bash
 
-   pip install https://bitbucket.org/lukaszmentel/panther/get/tip.tar.gz
+   pip install https://bitbucket.org/lukaszmentel/panthera/get/tip.tar.gz
 
 or cloned first
 
 .. code-block:: bash
 
-   hg clone https://lukaszmentel@bitbucket.org/lukaszmentel/panther
+   hg clone https://lukaszmentel@bitbucket.org/lukaszmentel/panthera
 
 and installed via
 
 .. code-block:: bash
 
-   pip install -U [--user] ./panther
+   pip install -U [--user] ./panthera
 
-.. _github repository: https://github.com/lmmentel/panther
+.. _github repository: https://github.com/lmmentel/panthera
 .. _pip: https://pip.pypa.io/en/stable/
 
 .. [1] Bučko, T., Hafner, J., & Ángyán, J. G. (2005). Geometry optimization of

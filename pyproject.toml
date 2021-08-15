@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "panther"
+name = "panthera"
 version = "0.5.2"
 description = "Package for calculating thermochemistry with anharmonic corrections"
 authors = ["Lukasz Mentel <lmmentel@gmail.com>"]
 maintainers = ["Lukasz Mentel <lmmentel@gmail.com>"]
 readme = "README.md"
 license = "MIT"
-homepage = "https://github.com/lmmentel/panther"
-repository = "https://github.com/lmmentel/panther"
+homepage = "https://github.com/lmmentel/panthera"
+repository = "https://github.com/lmmentel/panthera"
 keywords = ["vibrations", "anharmonic", "thermochemistry", "chemistry", "physics"]
 
 [tool.poetry.dependencies]

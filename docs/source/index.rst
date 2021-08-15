@@ -1,9 +1,9 @@
-.. panther documentation master file, created by
+.. panthera documentation master file, created by
    sphinx-quickstart on Tue Apr  5 18:35:48 2016.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to panther's documentation!
+Welcome to panthera's documentation!
 ===================================
 
 
@@ -21,19 +21,19 @@ Contents:
 Citing
 ------
 
-If you use *panther* in a scientific publication, please cite the software as
+If you use *panthera* in a scientific publication, please cite the software as
 
-- L. M. Mentel, **PANTHER - Python Package for Anharmonic Thermochemistry**, 2016--, `https://bitbucket.org/lukaszmentel/panther <https://bitbucket.org/lukaszmentel/panther>`_
+- L. M. Mentel, **panthera - Python Package for Anharmonic Thermochemistry**, 2016--, `https://bitbucket.org/lukaszmentel/panthera <https://bitbucket.org/lukaszmentel/panthera>`_
 
 An example of a BibTeX entry can look like this:
 
 .. code-block:: TeX
 
-   @misc{panther2016,
+   @misc{panthera2016,
    author = {Mentel, Lukasz Michal},
-   title = {{PANTHER}: Python Package for Anharmonic Thermochemistry},
+   title = {{panthera}: Python Package for Anharmonic Thermochemistry},
    year = {2016--},
-   url = {https://bitbucket.org/lukaszmentel/panther},
+   url = {https://bitbucket.org/lukaszmentel/panthera},
    }
 
 

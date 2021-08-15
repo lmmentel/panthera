@@ -5,7 +5,7 @@ Tutorials
 Harmonic and Anharmonic Thermochemistry
 ---------------------------------------
 
-This tutorial explains step by step how to use the panther_ package to
+This tutorial explains step by step how to use the panthera_ package to
 calculate the thermodynamic functions of molecules and solids making use
 of the standard harmonic vibrational analysis and anharmonic vibrations
 in the independent mode approximation as explained in detail in references
@@ -16,7 +16,7 @@ underlying data structures, however in production runs such level of verbosity
 is not necessary.
 
 The methanol molecule will be used as and example and VASP_ code will be used
-to perform the calculations, however since panther_ is interfaced with ASE_
+to perform the calculations, however since panthera_ is interfaced with ASE_
 any of the supported calculators_ can be used instead with appropriate
 modifications.
 
@@ -80,7 +80,7 @@ for convenience
 
 .. code-block:: python
 
-   from panther.io import read_vasp_hessian
+   from panthera.io import read_vasp_hessian
 
    # adjust the calcualtor argument for hessian calculation 
    calc.set(ibrion=5, potim=0.02)
@@ -99,20 +99,20 @@ frequencies and normal modes
 
 .. code-block:: python
 
-   from panther.vibrations import harmonic_vibrational_analysis
+   from panthera.vibrations import harmonic_vibrational_analysis
 
    frequencies, normal_modes = harmonic_vibrational_analysis(hessian, meoh,
                proj_translations=True, proj_rotations=True, ascomplex=False)
 
 The resulting frequencies are in `atomic units`_ and need to be
 converted to Joules and passed to
-:py:class:`Thermochemistry <panther.thermochemistry.Thermochemistry>` to
+:py:class:`Thermochemistry <panthera.thermochemistry.Thermochemistry>` to
 calculate thermochemical functions
 
 .. code-block:: python
 
    from scipy.constants import value, Planck
-   from panther.thermochemistry import Thermochemistry
+   from panthera.thermochemistry import Thermochemistry
 
    vibenergies = Planck * frequencies.real * value('hartree-hertz relationship')
    vibenergies = vibenergies[vibenergies > 0.0]
@@ -157,7 +157,7 @@ Normal Mode Relaxation
 
 In some cases it is advantegeous to refine the structure using displacements
 along normal modes of vibrations, such a functionality is provided through
-the :py:class:`NormalModeBFGS <panther.nmrelaxation.NormalModeBFGS>` which
+the :py:class:`NormalModeBFGS <panthera.nmrelaxation.NormalModeBFGS>` which
 is based on the
 `Optimizer <https://wiki.fysik.dtu.dk/ase/ase/optimize.html#module-ase.optimize>`_
 class from the ASE_ pakckage. The method requires an initial guess for the hessian
@@ -167,7 +167,7 @@ therefore it needs to be converted.
 
 .. code-block:: python
 
-   from panther.nmrelaxation import NormalModeBFGS
+   from panthera.nmrelaxation import NormalModeBFGS
 
    from scipy.constants import angstrom, value
 
@@ -194,7 +194,7 @@ Internal coordinate displacements
 With frequencies and normal modes we can further generate a
 grid of displacements along each normal mode using internal coordinates to
 improve the sampling of the potential energy surface. This is done using the
-:py:func:`calculate_displacements <panther.displacements.calculate_displacements>`
+:py:func:`calculate_displacements <panthera.displacements.calculate_displacements>`
 function. The function returns a nested :py:class:`OrderedDict <collections.OrderedDict>`
 of structures as `ase.Atoms`_ objects with mode number and displacement sample number as keys.
 For example if ``npoints=4`` is given as an argument there will be 8 structures
@@ -203,7 +203,7 @@ and the magnitude of the displacement.
 
 .. code-block:: python
 
-   from panther.displacements import calculate_displacements
+   from panthera.displacements import calculate_displacements
 
    images, modeinfo = calculate_displacements(meoh, hessian, frequencies, normal_modes, npoints=4)
 
@@ -243,7 +243,7 @@ using the VASP_ calculator again in the single point calculation mode
 
 .. code-block:: python
 
-   from panther.pes import calculate_energies
+   from panthera.pes import calculate_energies
 
    # set the calculator in single point mode
    calc.set(ibrion=-1)
@@ -280,13 +280,13 @@ Calculating the frequencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Frequencies can now be calculated using the finite difference method implemented in
-:py:func:`panther.pes.differentiate` function and appended as a ``frequency`` column
+:py:func:`panthera.pes.differentiate` function and appended as a ``frequency`` column
 to the ``modeinfo``. The returned ``vibs`` matrix contains four columns corresponding
 to derivatives calculated with the central formula using 2, 4, 6 and 8 points 
 
 .. code-block:: python
 
-   from panther.pes import differentiate
+   from panthera.pes import differentiate
    from scipy.constants import value
 
    dsp = modeinfo.loc[modeinfo['vibration'], 'displacement'].astype(float).values
@@ -320,7 +320,7 @@ The last this is to fit the potential energy surfaces as 6th and 4th order polyn
 
 .. code-block:: python
 
-   from panther.pes import fit_potentials
+   from panthera.pes import fit_potentials
 
    # fit the potentials on 6th and 4th order polynomials
    c6o, c4o = fit_potentials(modeinfo, energies)
@@ -332,7 +332,7 @@ plotted
 
 .. code-block:: python
 
-   from panther.plotting import plotmode
+   from panthera.plotting import plotmode
 
    plotmode(1, energies, modeinfo, c6o, c4o)
 
@@ -351,8 +351,8 @@ are used to calculate the thermodynamic functions
 
 .. code-block:: python
 
-   from panther.anharmonicity import anharmonic_frequencies, harmonic_df, merge_vibs
-   from panther.thermochemistry import AnharmonicThermo
+   from panthera.anharmonicity import anharmonic_frequencies, harmonic_df, merge_vibs
+   from panthera.thermochemistry import AnharmonicThermo
 
    anh6o = anharmonic_frequencies(meoh, 273.15, c6o, modeinfo)
    anh4o = anharmonic_frequencies(meoh, 273.15, c4o, modeinfo)
@@ -405,7 +405,7 @@ are used to calculate the thermodynamic functions
 .. _LBFGS: https://en.wikipedia.org/wiki/Limited-memory_BFGS
 .. _numpy array: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.array.html
 .. _OUTCAR: http://cms.mpi.univie.ac.at/vasp/guide/node50.html#SECTION00070000000000000000
-.. _panther: http://panther.rtfd.io
+.. _panthera: http://panthera.rtfd.io
 .. _trajectory: https://wiki.fysik.dtu.dk/ase/ase/io/trajectory.html
 .. _VASP: https://www.vasp.at/
 

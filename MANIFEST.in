@@ -3,4 +3,4 @@ include docs/Makefile
 include docs/source/conf.py
 include README.md
 include LICENSE.rst
-include panther_requirements.txt
+include panthera_requirements.txt

@@ -3,23 +3,23 @@ User guide
 
 Available CLI programs:
 
-    - :ref:`panther-label` format conversion, calculation of harmonic and anharmonic frequencies
+    - :ref:`panthera-label` format conversion, calculation of harmonic and anharmonic frequencies
     - :ref:`plotmode-label` visualiztion of vibrational potential per mode
     - :ref:`writemodes-label` conversion of geometry files to collections of modes
 
 
-.. _panther-label:
+.. _panthera-label:
 
-panther
+panthera
 -------
 
-The panther script takes two command line argument
+The panthera script takes two command line argument
 
 .. code-block:: bash
 
-   $ panther
+   $ panthera
 
-   usage: panther [-h] {convert,harmonic,anharmonic} config
+   usage: panthera [-h] {convert,harmonic,anharmonic} config
 
    positional arguments:
      {convert,harmonic,anharmonic}

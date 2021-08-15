@@ -23,7 +23,7 @@ def expandrange(modestr):
     Examples
     --------
 
-    >>> from panther.pes import expandrange
+    >>> from panthera.pes import expandrange
     >>> s = "2,3,5-10,20,25-30"
     >>> expandrange(s)
     [2, 3, 5, 6, 7, 8, 9, 10, 20, 25, 26, 27, 28, 29, 30]
