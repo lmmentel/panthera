@@ -3,7 +3,12 @@ name = "panther"
 version = "0.5.2"
 description = "Package for calculating thermochemistry with anharmonic corrections"
 authors = ["Lukasz Mentel <lmmentel@gmail.com>"]
+maintainers = ["Lukasz Mentel <lmmentel@gmail.com>"]
+readme = "README.md
 license = "MIT"
+homepage = "https://github.com/lmmentel/panther"
+repository = "https://github.com/lmmentel/panther"
+keywords = ["vibrations", "anharmonic", "thermochemistry", "chemistry", "physics"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
