@@ -4,7 +4,7 @@ version = "0.5.2"
 description = "Package for calculating thermochemistry with anharmonic corrections"
 authors = ["Lukasz Mentel <lmmentel@gmail.com>"]
 maintainers = ["Lukasz Mentel <lmmentel@gmail.com>"]
-readme = "README.md
+readme = "README.md"
 license = "MIT"
 homepage = "https://github.com/lmmentel/panther"
 repository = "https://github.com/lmmentel/panther"
@@ -19,7 +19,7 @@ numpydoc = "^1.1.0"
 matplotlib = "^3.4.3"
 pandas = "^1.3.1"
 scipy = "^1.7.1"
-bmatrix = { git = "https://github.com/lmmentel/bmatrix.git", branch = "main" }
+bmatrix = "^1.0.1"
 
 [tool.poetry.dev-dependencies]
 black = "^21.6b0"
