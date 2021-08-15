@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/panthera/badge/?version=latest)](https://panthera.readthedocs.io/en/latest/?badge=latest)
+
 
 # panthera - program for anharmonic thermochemistry
 
