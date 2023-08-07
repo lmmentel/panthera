@@ -1,9 +1,0 @@
-ase
-lxml
-numpy
-numpydoc
-matplotlib
-pandas
-scipy
-six
-future
